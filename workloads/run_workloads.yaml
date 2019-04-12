@@ -24,6 +24,7 @@
     job_key: "{{cluster}}/{{role}}/staging{{env_uniq_id}}/{{job_name}}"
     aurora_file: "{{job_id}}/{{job_id}}.aurora"
     create_job_command: "aurora job create {{job_key}} {{aurora_file}}"
+    create_job_command_k8s: "python36 {{job_id}}/{{job_id}}.py | kubectl create -f -"
 
     workload_version: "{{workloads[workload_name][workload_version_name] if workload_name in workloads else dict(count=0) }}"
 
@@ -47,9 +48,12 @@
     communication_port: "{{workload_version.communication_port | int + item.workload_instance_index }}"
 
     application_host_ip: "{{inventory_hostname}}"
+    orchestrator: "Kubernetes"
+
 
 
   environment:
+    PYTHONPATH: "."
     job_key: "{{job_key}}"
     job_name: "{{job_name}}"
     role: "{{role}}"
@@ -83,7 +87,7 @@
 
   tasks:
     - name: Clean jobs
-      # Compatbility with Ansible 2.7
+      # Compatibility with Ansible 2.7
       # Fill all normally required parameters for workload that 
       # make no sense for this task.
       vars:
@@ -99,9 +103,16 @@
         communication_port: 
         own_ip: 
         job_id: 
-        job_uniq_id: 
-      shell: "aurora job list {{cluster}}/{{role}}/staging{{env_uniq_id}}{{'/'+kill_job_name if kill_job_name is defined else ''}} |
-              xargs --no-run-if-empty -n 1 -P0 aurora job killall"
+        job_uniq_id:
+      block:
+      - name: Mesos | Clean jobs
+        shell: "aurora job list {{cluster}}/{{role}}/staging{{env_uniq_id}}
+        {{'/'+kill_job_name if kill_job_name is defined else ''}} |
+        xargs --no-run-if-empty -n 1 -P0 aurora job killall"
+        when: orchestrator == "Mesos"
+      - name: Kubernetes | Clean jobs
+        shell: "kubectl delete --all pods --namespace=default"
+        when: orchestrator == "Kubernetes"
       delegate_to: localhost
       tags: clean_jobs
 
@@ -123,15 +134,29 @@
         environment:
           jmx_port: "{{workload_version.jmx_port + item.workload_instance_index}}"
           storage_port: "{{workload_version.storage_port + item.workload_instance_index}}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create Cassandra
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create Cassandra
+          shell: "{{create_job_command_k8s}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: cassandra_ycsb--cassandra
       - name: Create ycsb for cassandra
         vars:
           job_id: ycsb
           own_ip: "{{load_generator_host_ip}}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create ycsb
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create ycsb
+          shell: "{{create_job_command_k8s}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: cassandra_ycsb--ycsb
       delegate_to: localhost
       tags: cassandra_ycsb
@@ -152,15 +177,29 @@
         environment:
           jmx_port: "{{workload_version.jmx_port + item.workload_instance_index}}"
           storage_port: "{{workload_version.storage_port + item.workload_instance_index}}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create Cassandra
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create Cassandra
+          shell: "{{create_job_command_k8s}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: cassandra_stress--cassandra
       - name: Create cassandra_stress
         vars:
           job_id: cassandra_stress
           own_ip: "{{load_generator_host_ip}}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create Cassandra Stress
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create Cassandra Stress
+          shell: "{{create_job_command_k8s}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: cassandra_stress--stress
       delegate_to: localhost
       tags: cassandra_stress
@@ -178,15 +217,29 @@
         vars:
           job_id: redis
           own_ip: "{{application_host_ip}}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create redis
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create redis
+          shell: "{{create_job_command_k8s}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: redis_rpc_perf--redis
       - name: Create rpc-perf for redis
         vars:
           job_id: rpc_perf
           own_ip: "{{load_generator_host_ip}}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create rpc-perf for redis
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create rpc-perf for redis
+          shell: "{{create_job_command_k8s}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: redis_rpc_perf--rpc_perf
       delegate_to: localhost
       tags: redis_rpc_perf
@@ -204,15 +257,29 @@
         vars:
           job_id: twemcache
           own_ip: "{{application_host_ip}}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create twemcache
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create twemcache
+          shell: "{{create_job_command_k8s}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: twemcache_rpc_perf--twemcache
       - name: Create rpc-perf for twemcache
         vars:
           job_id: rpc_perf
           own_ip: "{{load_generator_host_ip}}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create rpc-perf
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create rpc-perf
+          shell: "{{create_job_command_k8s}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: twemcache_rpc_perf--rpc_perf
       delegate_to: localhost
       tags: twemcache_rpc_perf
@@ -230,15 +297,29 @@
         vars:
           job_id: twemcache
           own_ip: "{{application_host_ip}}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create twemcache
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create twemcache
+          shell: "{{create_job_command_k8s}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: twemcache_mutilate--twemcache
       - name: Create mutilate for twemcache
         vars:
           job_id: mutilate
           own_ip: "{{load_generator_host_ip}}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create mutilate
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create mutilate
+          shell: "{{create_job_command_k8s}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: twemcache_mutilate--mutilate
       delegate_to: localhost
       tags: twemcache_mutilate
@@ -261,24 +342,45 @@
           job_id: backend
           own_ip: "{{application_host_ip}}"
         environment: "{{workload_version[job_id].env | default({}) }}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create specjbb backends
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create specjbb backend
+          shell: "python36 {{workload_name}}/{{workload_name}}.py | kubectl create -f -"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: specjbb--backend
       - name: Create specjbb injectors
         vars:
           job_id: injector
           own_ip: "{{load_generator_host_ip}}"
         environment: "{{workload_version[job_id].env | default({}) }}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create specjbb injector
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create specjbb injector
+          shell: "python36 {{workload_name}}/{{workload_name}}.py | kubectl create -f -"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: specjbb--injector
       - name: Create specjbb controllers
         vars:
           job_id: controller
           own_ip: "{{load_generator_host_ip}}"
         environment: "{{workload_version[job_id].env | default({}) }}"
-        command: "{{create_job_command}}"
-        loop: "{{instances_version_iterator}}"
+        block:
+        - name: Mesos | Create specjbb controllers
+          shell: "{{create_job_command}}"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Mesos"
+        - name: Kubernetes | Create specjbb controllers
+          shell: "python36 {{workload_name}}/{{workload_name}}.py | kubectl create -f -"
+          loop: "{{instances_version_iterator}}"
+          when: orchestrator == "Kubernetes"
         tags: specjbb--controller
       delegate_to: localhost
       tags: specjbb
@@ -376,7 +478,14 @@
         timeout: "{{workload_version.timeout}}"
         stressor: "{{workload_version.stressor}}"
         number_workers: "{{workload_version.number_workers}}"
+      block:
+      - name: Mesos | Create stress_ng
+        shell: "{{create_job_command}}"
+        loop: "{{instances_version_iterator}}"
+        when: orchestrator == "Mesos"
+      - name: Kubernetes | Create stress_ng
+        shell: "{{create_job_command_k8s}}"
+        loop: "{{instances_version_iterator}}"
+        when: orchestrator == "Kubernetes"
       delegate_to: localhost
       tags: stress_ng
-      command: "{{create_job_command}}"
-      loop: "{{instances_version_iterator}}"
