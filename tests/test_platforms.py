@@ -19,7 +19,7 @@ import pytest
 
 from owca.metrics import Metric, MetricName
 from owca.platforms import Platform, parse_proc_meminfo, parse_proc_stat, \
-    collect_topology_information, collect_platform_information
+    collect_topology_information, collect_platform_information, RDTInformation
 from owca.testing import create_open_mock
 
 
@@ -97,6 +97,17 @@ def test_collect_topology_information_2_cores_per_socket_all_cpus_online(*mocks)
     assert (4, 4, 2) == collect_topology_information()
 
 
+@patch('builtins.open', new=create_open_mock({
+    "/sys/fs/resctrl/info/L3/cbm_mask": "fffff",
+    "/sys/fs/resctrl/info/L3/min_cbm_bits": "2",
+    "/sys/fs/resctrl/info/L3/num_closids": "16",
+    "/sys/fs/resctrl/info/MB/bandwidth_gran": "10",
+    "/sys/fs/resctrl/info/MB/min_bandwidth": "20",
+    "/sys/fs/resctrl/info/MB/num_closids": "8",
+    "/sys/fs/resctrl/schemata": "MB:0=100",
+    "/proc/stat": "parsed value mocked below",
+    "/proc/meminfo": "parsed value mocked below",
+}))
 @patch('owca.platforms.get_owca_version', return_value="0.1")
 @patch('socket.gethostname', return_value="test_host")
 @patch('owca.platforms.parse_proc_meminfo', return_value=1337)
@@ -105,7 +116,8 @@ def test_collect_topology_information_2_cores_per_socket_all_cpus_online(*mocks)
 @patch('time.time', return_value=1536071557.123456)
 def test_collect_platform_information(*mocks):
     assert collect_platform_information() == (
-        Platform(1, 1, 2, {0: 100, 1: 200}, 1337, 1536071557.123456),
+        Platform(1, 1, 2, {0: 100, 1: 200}, 1337, 1536071557.123456,
+                 RDTInformation('fffff', '2', True, 8, 10, 20)),
         [
             Metric.create_metric_with_metadata(
                 name=MetricName.MEM_USAGE, value=1337

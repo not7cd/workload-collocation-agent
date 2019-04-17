@@ -4,92 +4,144 @@ Allocation algorithm interface
 
 **This software is pre-production and should not be deployed to production servers.**
 
-Note: **This API is not considered stable, but work in progress** - please see https://github.com/intel/owca/pull/10 for status of implementation.
-
 .. contents:: Table of Contents
 
 Introduction
 ------------
 
-Resource allocation interface allows to provide control logic based on gathered platform and resources metrics and enforce isolation
-on compute resources (cpu, cache and memory).
+Resource allocation interface allows to provide plugin with resource control logic. Such component
+can enforce isolation based on platform and tasks resources usage metrics.
+
+To enable allocation feature, the agent has to be configured to use the ``AllocationRunner`` component.
+The runner requires `Allocator`_, to be provided. Allocation decisions are based
+on results from ``allocate`` method from `Allocator`_.
 
 Configuration 
 -------------
 
-Example of minimal configuration to use as ``AllocationRuner`` structure in
-configuration file  ``config.yaml``:
+Example of minimal configuration that uses ``AllocationRunner``:
 
 .. code:: yaml
 
+    # Basic configuration to dump metrics on stderr with NOPAnomaly detector
     runner: !AllocationRunner
       node: !MesosNode
-      action_delay: 1                                  # [s]
-      allocator: !ExampleAllocator
+      allocator: !NOPAllocator
 
-Provided  ``AllocationRunner`` class has the following required and optional attributes.
+``runner`` is responsible for discovering tasks running on ``node``, provides this information to
+``allocator`` and then reconfigures resources like cpu shares/quota, cache or memory bandwidth.
+All information about existing allocations, detected anomalies or other metrics are stored in
+corresponding storage classes.
 
-.. code:: python
+``AllocationRunner`` class has the following required and optional attributes:
 
-    @dataclass
-    class AllocationRunner:
+.. code-block:: python
 
-        # Required
-        node: MesosNode
-        allocator: Allocator
+    class AllocationRunner(MeasurementRunner):
+        """Runner is responsible for getting information about tasks from node,
+        calling allocate() callback on allocator, performing returning allocations
+        and storing all allocation related metrics in allocations_storage.
 
-        # Optional with default values
-        action_delay: float = 1.                        # callback function call interval [s]
-        # Default static configuration for allocation
-        allocations: AllocationConfiguration = AllocationConfiguration()
-        metrics_storage: Storage = LogStorage()         # stores internal and input metrics for allocation algorithm
-        allocations_storage: Storage = LogStorage()     # stores any allocations issued on tasks
-        anomalies_storage: Storage = LogStorage()       # stores any detected anomalies during allocation iteration
+        Because Allocator interface is also detector, we store serialized detected anomalies
+        in anomalies_storage and all other measurements in metrics_storage.
 
-``AllocationConfigurations`` structure contains static configuration to perform normalization of specific resource allocations.
+        Arguments:
+            node: component used for tasks discovery
+            allocator: component that provides allocation logic
+            metrics_storage: storage to store platform, internal, resource and task metrics
+                (defaults to DEFAULT_STORAGE/LogStorage to output for standard error)
+            anomalies_storage: storage to store serialized anomalies and extra metrics
+                (defaults to DEFAULT_STORAGE/LogStorage to output for standard error)
+            allocations_storage: storage to store serialized resource allocations
+                (defaults to DEFAULT_STORAGE/LogStorage to output for standard error)
+            action_delay: iteration duration in seconds (None disables wait and iterations)
+                (defaults to 1 second)
+            rdt_enabled: enables or disabled support for RDT monitoring and allocation
+                (defaults to None(auto) based on platform capabilities)
+            rdt_mb_control_enabled: enables or disables support for RDT memory bandwidth
+                (defaults to None(auto) based on platform capabilities) allocation
+            extra_labels: additional labels attached to every metrics
+                (defaults to empty dict)
+            allocation_configuration: allows fine grained control over allocations
+                (defaults to AllocationConfiguration() instance)
+            remove_all_resctrl_groups (bool): remove all RDT controls groups upon starting
+                (defaults to False)
+        """
+
+        def __init__(
+                self,
+                node: nodes.Node,
+                allocator: Allocator,
+                metrics_storage: storage.Storage = DEFAULT_STORAGE,
+                anomalies_storage: storage.Storage = DEFAULT_STORAGE,
+                allocations_storage: storage.Storage = DEFAULT_STORAGE,  
+                action_delay: Numeric(0, 60) = 1.,  # [s]
+                rdt_enabled: Optional[bool] = None,  # Defaults(None) - auto configuration.
+                rdt_mb_control_enabled: Optional[bool] = None,  # Defaults(None) - auto configuration.
+                extra_labels: Dict[str, str] = None,
+                allocation_configuration: Optional[AllocationConfiguration] = None,
+                remove_all_resctrl_groups: bool = False,
+        ):
+        ...
+
+
+``AllocationConfiguration`` contains static configuration to perform normalization of specific resource allocations.
 
 .. code-block:: python
 
     @dataclass
     class AllocationConfiguration:
 
-        # Default value for cpu.cpu_period [us] (used as denominator).
-        cpu_quota_period : int = 100000
+        # Default value for cpu.cpu_period [ms] (used as denominator).
+        cpu_quota_period: int = 1000
 
-        # Number of minimum shares, when ``cpu_shares`` allocation is set to 0.0.
-        cpu_shares_min: int = 2                   
-        # Number of shares to set, when ``cpu_shares`` allocation is set to 1.0.
-        cpu_shares_max: int = 10000               
+        # Multiplier of AllocationType.CPU_SHARES allocation value. 
+        # E.g. setting 'CPU_SHARES' to 2.0 will set 2000 shares effectively
+        # in cgroup cpu controller.
+        cpu_shares_unit: int = 1000
 
-``Allocator`` structure and ``allocate`` resource callback function
+        # Default resource allocation for last level cache (L3) and memory bandwidth
+        # for root RDT group.
+        # Root RDT group is used as default group for all tasks, unless explicitly reconfigured by
+        # allocator. 
+        # `None` (the default value) means no limit (effectively set to maximum available value).
+        default_rdt_l3: str = None
+        default_rdt_mb: str = None
+
+``Allocator``
 --------------------------------------------------------------------
-        
-``Allocator`` class must implement one function with following signature:
+
+``Allocator`` subclass must implement an ``allocate`` function with following signature:
 
 .. code:: python
 
     class Allocator(ABC):
 
-        def allocate(self,
+        @abstractmethod
+        def allocate(
+                self,
                 platform: Platform,
                 tasks_measurements: TasksMeasurements,
                 tasks_resources: TasksResources,
                 tasks_labels: TasksLabels,
-                tasks_allocations: TasksAllocations,             
-            ) -> (TasksAllocations, List[Anomaly], List[Metric]):
+                tasks_allocations: TasksAllocations,
+        ) -> (TasksAllocations, List[Anomaly], List[Metric]):
             ...
 
+All but ``TasksAllocations`` input arguments types are documented in `detection document <detection.rst>`_.
 
-Allocation interface reuses existing ``Detector`` input and metric structures. Please refer to `detection document <detection.rst>`_ 
-for further reference on ``Platform``, ``TaskResources``, ``TasksMeasurements``, ``Anomaly`` and ``TaskLabels`` structures.
-
-``TasksAllocations`` structure is a mapping from task identifier to allocations and defined as follows:
+Both ``TaskAllocations`` and ``TasksAllocations`` structures are simple python dict types defined as follows:
 
 .. code:: python
 
+    class AllocationType(Enum, str):
+        QUOTA = 'cpu_quota'
+        SHARES = 'cpu_shares'
+        RDT = 'rdt'
+
     TaskId = str
+    TaskAllocations = Dict[AllocationType, Union[float, int, RDTAllocation]]
     TasksAllocations = Dict[TaskId, TaskAllocations]
-    TaskAllocations = Dict[AllocationType, Union[float, RDTAllocation]]
 
     # example
     tasks_allocations = {
@@ -114,15 +166,19 @@ for further reference on ``Platform``, ``TaskResources``, ``TasksMeasurements``,
     }
 
 
-Please refer to `rdt`_ for definition of ``RDTAllocation``.
+Please refer to `rdt`_ allocation type for definition of ``RDTAllocation`` structure.
 
-This structure is used as an input representing currently enforced configuration and as an output representing desired allocations that will be applied in the current ``AllocationRunner`` iteration.
+``TasksAllocations`` is used as:
 
-``allocate`` function  may return ``TaskAllocations`` for some tasks only. Resources allocated to tasks that no returned ``TaskAllocations`` describes will not be affected.
+- an input representing currently enforced configuration,
+- an output representing desired allocations that will be applied in the current ``AllocationRunner`` iteration.
 
-The ``AllocationRunner`` is stateful and relies on operating system to store the state. 
+``allocate`` function does not need to return ``TaskAllocations`` for all tasks.
+For omitted tasks, allocations will not be affected.
 
-Note that, if ``OWCA`` service is restarted, then already applied allocations will not be reset 
+``AllocationRunner`` is stateless and relies on operating system to store the state.
+
+Note that, if the agent is restarted, then already applied allocations will not be reset 
 (current state of allocation on system will be read and provided as input).
 
 Supported allocations types
@@ -130,19 +186,9 @@ Supported allocations types
 
 Following built-in allocations types are supported:
 
-- ``cpu_quota`` - CPU Bandwidth Control called quota (normalized)
-- ``cpu_shares`` - CPU shares for Linux CFS (normalized)
-- ``rdt`` - Intel RDT (raw access)
-
-The built-in allocation types are defined using following ``AllocationType`` enumeration:
-
-.. code-block:: python
-
-    class AllocationType(Enum, str):
-
-        QUOTA = 'cpu_quota'
-        SHARES = 'cpu_shares'
-        RDT = 'rdt'
+- ``cpu_quota`` - CPU Bandwidth Control called quota (normalized),
+- ``cpu_shares`` - CPU shares for Linux CFS (normalized),
+- ``rdt`` - Intel RDT resources.
 
 cpu_quota
 ^^^^^^^^^
@@ -150,35 +196,39 @@ cpu_quota
 ``cpu_quota`` is normalized in respect to whole system capacity (all logical processor) and will be applied using cgroups cpu subsystem
 using CFS bandwidth control.
 
-For example, with default ``cpu_period`` set to **100ms** on machine with **16** logical processor, setting ``cpu_quota`` to **0.25**, means that
-hard limit on quarter on the available CPU resources, will effectively translated into **400ms** quota.
-
-Base ``cpu_period`` value is configured in ``AllocationConfiguration`` structure during ``AllocationRunner`` initialization.
-
-Formula for calculating quota for cgroup subsystem:
+Formula for calculating quota normalized to platform capacity:
 
 .. code-block:: python
 
-    effective_cpu_quota = task_cpu_quota_normalized * configured_cpu_period * platform_cpus  
+    effective_cpu_quota = cpu_quota * allocation_configuration.cpu_quota_period * platform.cpus
+
+For example, with default ``cpu_period`` set to **100ms** on machine with **16** logical processor, setting ``cpu_quota`` to **0.25**, means that
+hard limit on quarter on the available CPU resources, will effectively translated into **400ms** quota.
+
+Note that, setting ``cpu_quota``:  
+
+- to or above **1.0**, means disabling the hard limit at all (effectively set to it to -1 in cpu.cfs_quota_us),
+- to **0.0**, limits the allowed time to the minimum allowed value (1ms).
+
+CFS "period" is configured statically in ``AllocationConfiguration``.
 
 Refer to `Kernel sched-bwc.txt <https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt>`_ document for further reference.
 
 cpu_shares
 ^^^^^^^^^^
 
-``cpu_shares`` value is normalized against all cores available on the platform so:
-
-- **1.0** will be translated into ``AllocationConfiguration.cpu_shares_max``
-- **0.0** will be translated into ``AllocationConfiguration.cpu_shares_min``
-
-and values between will be normalized according following formula:
+``cpu_shares`` value is normalized against configured ``AllocationConfiguration.cpu_shares_unit``.
 
 .. code-block:: python
 
-    effective_cpu_shares = task_cpu_shares_normalized * (cpu_shares_max - cpu_shares_min) + cpu_shares_min
+    effective_cpu_shares = cpu_shares * allocation_configuration.cpu_shares_unit
+
+Note that, setting ``cpu_shares``:  
+
+- to **1.0** will be translated into ``AllocationConfiguration.cpu_shares_unit``
+- to **0.0** will be translated into minimum number of shares allowed by system (effectively "2").
 
 Refer to `Kernel sched-design <https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt>`_ document for further reference.
-
 
 rdt
 ^^^
@@ -187,16 +237,16 @@ rdt
 
     @dataclass
     class RDTAllocation:
-        name: str = None  # defaults to TaskId from TasksAllocations
-        mb: str = None  # optional - when no provided doesn't change the existing allocation
-        l3: str = None  # optional - when no provided doesn't change the existing allocation
+        name: str = None    # defaults to TaskId from TasksAllocations
+        mb: str = None      # optional - when not provided does not change the existing allocation
+        l3: str = None      # optional - when not provided does not change the existing allocation
 
-You can use ``RDTAllocation`` structure to configure Intel RDT available resources.
+You can use ``RDTAllocation`` class to configure Intel RDT resources.
 
-``RDTAllocation`` wraps resctrl ``schemata`` file. Using ``name`` property allows one to specify name for control group to be used
-for given task to save limited CLOSids and isolate RDT resources for multiple containers at once.
+``RDTAllocation`` wraps resctrl ``schemata`` file. Using ``name`` property allows to specify name for control group. 
+Sharing control groups among tasks allows to save limited CLOSids resources.
 
-``name`` field is optional and if not provided, the ``TaskID`` from parent structure will be used.
+``name`` field is optional and if not provided, the ``TaskID`` from parent ``TasksAllocations`` class will be used.
 
 Allocation of available bandwidth for ``mb`` field is given format:
 
@@ -204,7 +254,7 @@ Allocation of available bandwidth for ``mb`` field is given format:
 
     MB:<cache_id0>=bandwidth0;<cache_id1>=bandwidth1
 
-expressed in percentage points as described in `Kernel x86/intel_rdt_ui.txt <https://www.kernel.org/doc/Documentation/x86/intel_rdt_ui.txt>`_.
+expressed in percentage as described in `Kernel x86/intel_rdt_ui.txt <https://www.kernel.org/doc/Documentation/x86/intel_rdt_ui.txt>`_.
 
 For example:
 
@@ -253,24 +303,40 @@ based on ``/sys/fs/resctrl/info/`` and ``procfs``
 
     class Platform:
         ...
-
-        # example
-        rdt_min_cbm_bits: str  # /sys/fs/resctrl/info/L3/min_cbm_bits
-        rdt_cbm_mask: str  #  /sys/fs/resctrl/info/L3/cbm_mask
-        rdt_min_bandwidth: str  # /sys/fs/resctrl/info/MB/min_bandwidth
+        rdt_information: RDTInformation
         ...
 
+    @dataclass
+    class RDTInformation:
+        cbm_mask: Optional[str]  # based on /sys/fs/resctrl/info/L3/cbm_mask
+        min_cbm_bits: Optional[str]  # based on /sys/fs/resctrl/info/L3/min_cbm_bits
+        rdt_mb_control_enabled: bool  # based on 'MB:' in /sys/fs/resctrl/info/L3/cbm_mask
+        num_closids: Optional[int]  # based on /sys/fs/resctrl/info/L3/num_closids
+        mb_bandwidth_gran: Optional[int]  # based on /sys/fs/resctrl/info/MB/bandwidth_gran
+        mb_min_bandwidth: Optional[int]  # based on /sys/fs/resctrl/info/MB/bandwidth_gran
 
 Refer to `Kernel x86/intel_rdt_ui.txt <https://www.kernel.org/doc/Documentation/x86/intel_rdt_ui.txt>`_ document for further reference.
 
 ``TaskAllocations`` metrics
 ----------------------------
 
-Returned ``TaskAllocations`` will be encoded as metrics and logged using ``Storage``.
-
-When stored using ``KafkaStorage`` returned ``TaskAllocations`` will be encoded in ``Prometheus`` exposition format:
+Returned ``TasksAllocations`` will be encoded in Prometheus exposition format:
 
 .. code-block:: ini
 
-    allocation(task_id='some-task-id', type='llc_cache', ...<other common and task specific labels>) 0.2 1234567890000
-    allocation(task_id='some-task-id', type='cpu_quota', ...<other common and task specific labels>) 0.2 1234567890000
+    # TYPE allocation gauge
+    allocation{allocation_type="cpu_quota",cores="28",cpus="56",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 1.0 1547663933289
+    allocation{allocation_type="cpu_shares",cores="28",cpus="56",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 0.5 1547663933289
+    allocation{allocation_type="rdt_l3_cache_ways",cores="28",cpus="56",domain_id="0",group_name="be",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 1 1547663933289
+    allocation{allocation_type="rdt_l3_cache_ways",cores="28",cpus="56",domain_id="1",group_name="be",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 1 1547663933289
+    allocation{allocation_type="rdt_l3_mask",cores="28",cpus="56",domain_id="0",group_name="be",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 2 1547663933289
+    allocation{allocation_type="rdt_l3_mask",cores="28",cpus="56",domain_id="1",group_name="be",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 2 1547663933289
+
+    # TYPE allocation_duration gauge
+    allocation_duration{cores="28",cpus="56",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2"} 0.002111196517944336 1547663933289
+
+    # TYPE allocations_count counter
+    allocations_count{cores="28",cpus="56",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2"} 660 1547663933289
+
+    # TYPE allocations_ignored_count counter
+    allocations_ignored_count{cores="28",cpus="56",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2"} 0 1547663933289

@@ -19,43 +19,49 @@ Check `Prometheus metrics types`_ for further reference
 .. _`Prometheus metrics types`: https://prometheus.io/docs/concepts/metric_types
 
 
+Supported orchestration systems
+-------------------------------
+We support both Mesos and Kubernetes (Kubernetes is currently supported only in the detect mode).
+
+As a reference configuration file use one located in `configs`_ directory.
+
+.. _`configs`: /configs
+
+
 Detector callback API
 ----------------------
 
 You can configure system to detect and report anomalies in following way in ``config.yaml``:
 
-.. code:: yaml
+.. code-block:: yaml
 
     runner: !DetectionRunner
       node: !MesosNode
-      metrics_storage: !KafkaStorage            # used for storing all inputs of detection algorithm
-      anomalies_storage: !KafkaStorage          # used for storing all outputs of detection algorithm
-      action_delay: 1.                          # [s]
-      detector: !ContentionAnomalyDetector      # implementation of abstract AnomalyDetector class
+      delay: 1.                                 # [s]
+      detector: !ExampleAnomalyDetector      # implementation of abstract AnomalyDetector class
         example_config_int: 1
         example_config_list: [1, 4]
 
 
-``ContentionAnomalyDetector`` class must implement following interface:
+where ``ExampleAnomalyDetector`` class must implement following interface:
 
-.. code:: python
+.. code-block:: python
 
     class AnomalyDetector(ABC):
 
         def detect(self,
                     platform: Platform,
                     tasks_measurements: TasksMeasurements,
-                    tasks_resources: TasksResources,
-                    tasks_labels: TasksLabels,
+                    tasks_resources: TasksResources
                     ) -> (List[Anomaly], List[Metric]):
             ...
 
 
 Example implementation:
 
-.. code:: python
+.. code-block:: python
 
-    class ContentionAnomalyDetector:
+    class ExampleAnomalyDetector:
 
         def __init__(self, example_config_int, example_config_list):
             self.example_config_list = example_config_list
@@ -68,7 +74,7 @@ Example implementation:
                          ) -> (List[Anomaly], List[Metric]):
             return [], []
 
-All config values provided under `detector` key in configuration are treated as simple types (including lists and dict),
+All config values provided under ``detector`` key in configuration are treated as simple types (including lists and dict),
 and are passed to constructor as keywords parameters.
 
 To be able to use externally provided implementation it is necessary to register external component

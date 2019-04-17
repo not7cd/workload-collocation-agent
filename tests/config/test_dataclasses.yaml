@@ -17,6 +17,7 @@ dc1: !DCExample
   x: 5
   y: null
   d: 'asd'
+  e: '/abc/def'
   foo: 'foobaz'
 dc2: !DCExample
   x: 1

@@ -17,10 +17,10 @@ import ctypes
 import logging
 import os
 import struct
-from typing import List, Dict, BinaryIO
+from typing import List, Dict, BinaryIO, Iterable
 
-from owca import perf_const as pc
 from owca import logger
+from owca import perf_const as pc
 from owca.metrics import Measurements, MetricName
 from owca.security import SetEffectiveRootUid
 
@@ -33,13 +33,15 @@ SCALING_RATE_WARNING_THRESHOLD = 1.50
 
 def _get_cpu_model() -> pc.CPUModel:
     if not os.path.exists('/dev/cpu/0/cpuid'):
-        log.warning('cannot detect cpu model - returning unknown')
+        log.warning('cannot detect cpu model (file /dev/cpu/0/cpuid does not exists!) '
+                    '- returning unknown')
         return pc.CPUModel.UNKNOWN
     with SetEffectiveRootUid():
         with open("/dev/cpu/0/cpuid", "rb") as f:
             b = f.read(32)
             eax = int(b[16]) + (int(b[17]) << 8) + (int(b[18]) << 16) + (int(b[19]) << 24)
-            log.log(logger.TRACE, '16,17,18,19th bytes from /dev/cpu/0/cpuid: %02x %02x %02x %02x',
+            log.log(logger.TRACE,
+                    '16,17,18,19th bytes from /dev/cpu/0/cpuid: %02x %02x %02x %02x',
                     b[16], b[17], b[18], b[19])
             model = (eax >> 4) & 0xF
             family = (eax >> 8) & 0xF
@@ -195,7 +197,7 @@ def _create_file_from_fd(pfd):
 class PerfCounters:
     """Perf facade on perf_event_open system call"""
 
-    def __init__(self, cgroup_path: str, event_names: List[MetricName]):
+    def __init__(self, cgroup_path: str, event_names: Iterable[MetricName]):
         # Provide cgroup_path with leading '/'
         assert cgroup_path.startswith('/')
         # cgroup path without leading '/'

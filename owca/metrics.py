@@ -14,8 +14,9 @@
 
 
 from enum import Enum
+from typing import Dict, Union, List, Tuple
+
 from dataclasses import dataclass, field
-from typing import Dict, Union
 
 
 class MetricName(str, Enum):
@@ -31,8 +32,11 @@ class MetricName(str, Enum):
 
 
 class MetricType(str, Enum):
-    GAUGE = 'gauge'      # arbitrary value (can go up and down)
+    GAUGE = 'gauge'  # arbitrary value (can go up and down)
     COUNTER = 'counter'  # monotonically increasing counter
+
+    def __repr__(self):
+        return repr(self.value)
 
 
 MetricValue = Union[float, int]
@@ -82,6 +86,11 @@ METRICS_METADATA: Dict[MetricName, MetricMetadata] = {
             '[bytes] Total memory used by platform in bytes based on /proc/meminfo '
             'and uses heuristic based on linux free tool (total - free - buffers - cache).'
         ),
+    MetricName.MEMSTALL:
+        MetricMetadata(
+            MetricType.COUNTER,
+            'Mem stalled loads'
+        ),
 }
 
 
@@ -107,3 +116,28 @@ class Metric:
 
 
 Measurements = Dict[MetricName, MetricValue]
+
+
+def sum_measurements(measurements_list: List[Measurements]) -> \
+        Tuple[Measurements, List[MetricName]]:
+    """Returns dictionary with metrics which are contained in all input measurements with value set
+       to arithmetic sum."""
+    summed_metrics: Measurements = {}
+
+    common_metrics_names = set()  # Intersect of set of names.
+    all_metrics_names = set()  # Sum of set of names.
+    for measurements in measurements_list:
+        metrics_names = set(measurements.keys())
+        if not common_metrics_names:
+            common_metrics_names = metrics_names
+        else:
+            common_metrics_names = common_metrics_names.intersection(metrics_names)
+        all_metrics_names.update(metrics_names)
+
+    ignored_metrics_names = sorted(list(all_metrics_names.difference(common_metrics_names)))
+
+    for metric_name in common_metrics_names:
+        summed_metrics[metric_name] = sum([measurements[metric_name]
+                                           for measurements in measurements_list])
+
+    return summed_metrics, ignored_metrics_names

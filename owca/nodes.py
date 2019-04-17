@@ -14,7 +14,7 @@
 
 
 from abc import ABC, abstractmethod
-from typing import List, Dict
+from typing import List, Dict, Union
 
 from dataclasses import dataclass
 
@@ -23,6 +23,10 @@ TaskId = str
 
 @dataclass
 class Task:
+    """Class used for abstracting information received from orchestration
+    node service concerning single container (e.g. mesos container) or a
+    group of containers (a mesos nested container or a kubernetes pod)."""
+
     # Human-friendly name of task
     name: str
 
@@ -30,13 +34,17 @@ class Task:
     task_id: TaskId
 
     # Path to cgroup that all processes reside in. Starts with leading "/".
+    #   e.g. /kubepods/bestefforts/9012839.
     cgroup_path: str
+
+    # List of paths to subcgroups (if no subcgroups exist returns empty list).
+    subcgroups_paths: List[str]
 
     # Task metadata expressed as labels.
     labels: Dict[str, str]
 
     # Initial resources assigned at orchestration level.
-    resources: Dict[str, str]
+    resources: Dict[str, Union[float, int, str]]
 
     def __hash__(self):
         """Every instance of task is uniquely identified by cgroup_path."""

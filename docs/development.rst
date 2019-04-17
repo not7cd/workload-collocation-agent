@@ -100,7 +100,17 @@ You can run without building a distribution like this:
 
 .. code-block:: shell
     
-    sudo env PYTHONPATH=. `which python3.6` owca/main.py -c configs/mesos_example.yaml --root
+    python3.6 -mpipenv shell
+    sudo env PYTHONPATH=. `which python` owca/main.py --root -c configs/extra/static_measurements.yaml
+
+
+Using example allocator:
+
+
+.. code-block:: shell
+
+    python3.6 -mpipenv shell
+    sudo env PYTHONPATH=. `which python` owca/main.py --root -c configs/extra/static_allocator.yaml
 
 Fast distribution rebuild
 -------------------------
@@ -110,3 +120,12 @@ When rebuilding you can use existing PEX build cache, to speedup building proces
 .. code-block:: shell
 
     PEX_OPTIONS='--no-index --cache-ttl=604800' make owca_package
+
+Running PEX in debug mode
+-------------------------
+
+It will try to find an ipdb or use internal built-in pdb module before running main() function to enter debug mode.
+
+.. code-block:: shell
+
+    PEX_MODULE=owca.main:debug ./dist/owca.pex
