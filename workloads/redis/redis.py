@@ -26,10 +26,13 @@ from common import application_host_ip, command, image_name, \
 communication_port = os.environ.get('communication_port', 11211)
 # ----------------------------------------------------------------------------------------------------
 
+# Preparing config file.
 cmdline_config = ["sh", "-c",
                   ("set -x && "
                    "cd /prep_config && "
                    "cp /etc/redis.conf . && "
+                   "sed -i 's/logfile.*/logfile \"\"/' \
+                   redis.conf && "
                    "sed -i \"s/port 6379/port {communication_port}/\" \
                    redis.conf && "
                    "sed -i \"s/bind 127.0.0.1/bind {application_host_ip}/\" \
@@ -56,9 +59,7 @@ initContainers.append(initContainer)
 
 volumeMounts.append(volume_prep_config)
 
-cmdline = "redis-server redis.conf"
-cmd = "redis-server /prep_config/redis.conf"
-command.append(cmd)
+command.append("redis-server /prep_config/redis.conf")
 
 json_format = json.dumps(pod)
 print(json_format)
