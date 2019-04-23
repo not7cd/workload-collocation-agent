@@ -16,7 +16,15 @@
 # Building owca.
 FROM centos:7 AS owca
 
-RUN yum install -y epel-release python36
+RUN yum -y update
+RUN yum -y install yum-utils
+RUN yum -y groupinstall development
+RUN yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+RUN yum makecache
+RUN yum -y install python35 python-pip
+#RUN yum install -y centos-release-scl epel-release makecache python35-setuptools
+
+RUN pip install pipenv
 
 WORKDIR /owca
 
