@@ -44,8 +44,8 @@ wait_for_cassandra_container = {
 initContainers.append(wait_for_cassandra_container)
 
 cassandra_warmup_cmd = ['sh', '-c',
-                        'cassandra-stress write n=%d \
-                        -node %s -port native=%s -rate threads=14'.format(
+                        'cassandra-stress write n={} \
+                        -node {} -port native={} -rate threads=14'.format(
                             number_of_rows,
                             application_host_ip,
                             communication_port)]
@@ -59,8 +59,8 @@ initContainers.append(cassandra_warmup_container)
 
 
 cassandra_stress_cmd = ['"while true; do cassandra-stress mixed duration=90s '
-                        '-pop seq=1..%d -node %s -port native=%s -rate '
-                        'threads=%d; done"'.format(number_of_rows,
+                        '-pop seq=1..{} -node {} -port native={} -rate '
+                        'threads={}; done"'.format(number_of_rows,
                                                    application_host_ip,
                                                    communication_port,
                                                    threads)]
