@@ -94,7 +94,7 @@ Assumptions:
 - ``/var/lib/owca`` directory exists
 - ``owca`` user and group already exists
  
-Please use following `template <../configs/owca.service>`_ as systemd ``/etc/systemd/system/owca.service`` unit file::
+Please use following `template <../configs/systemd-unit/owca.service>`_ as systemd ``/etc/systemd/system/owca.service`` unit file::
 
     [Unit]
     Description=Orchestration-aware Workload Collocation Agent

@@ -1,22 +1,26 @@
 runner: !DetectionRunner
-  rdt_enabled: {{rdt_enabled}}
+  rdt_enabled: false
   node: !KubernetesNode
-{% if owca_ssl_verify %}
-    mesos_agent_endpoint: "http://127.0.0.1:5051"
-{% endif %}
-  action_delay: 1.
-  metrics_storage: !KafkaStorage
-    brokers_ips: ['{{ broker_ip }}']
-    topic: "{{ owca_topic_metrics_name }}"
-    max_timeout_in_seconds: 5.
-  anomalies_storage: !KafkaStorage
-    brokers_ips: ['{{ broker_ip }}']
-    topic: "{{ owca_topic_anomalies_name }}"
-    max_timeout_in_seconds: 5.
-  detector: !{{owca_detector_class}}
-    {% for param_name, param_value in owca_detector_params.items() %}
-{{param_name}}: {{param_value}}
-    {% endfor %}
+    # We support two options: cgroupfs, systemd.
+    cgroup_driver: cgroupfs
+
+    # Fill needed PATH to key and certificate to access kubelet.
+    client_private_key: "/etc/kubernetes/ssl/apiserver-kubelet-client.key" #"$PATH/apiserver-kubelet-client.key"
+    client_cert: "/etc/kubernetes/ssl/apiserver-kubelet-client.crt" # "$PATH/apiserver-kubelet-client.crt"
+
+    # If the kubelete agent does not listen on localhost,
+    #   the endpoint must be provided.
+    kubelet_endpoint: "https://192.168.121.128:10250"
+
+    # List of namespaces to monitor pods in.
+    monitored_namespaces: ["default"]
+
+  metrics_storage: !LogStorage
+    output_filename: metrics.logs
+  anomalies_storage: !LogStorage
+    output_filename: anomalies.logs
+
+  detector: !ExampleDetector
 
   extra_labels:
     env_uniq_id: "{{env_uniq_id}}"

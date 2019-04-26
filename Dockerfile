@@ -16,51 +16,38 @@
 # Building owca.
 FROM centos:7 AS owca
 
-RUN yum -y update
-RUN yum -y install yum-utils
-RUN yum -y groupinstall development
-RUN yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-RUN yum makecache
-RUN yum -y install python35 python-pip
-#RUN yum install -y centos-release-scl epel-release makecache python35-setuptools
+#RUN yum -y update
+RUN yum -y install epel-release
+RUN yum -y install python36 python-pip which make git
 
 RUN pip install pipenv
 
+#COPY . .
+RUN git clone https://github.com/intel/owca.git
 WORKDIR /owca
 
-COPY . .
-
 RUN pipenv install --dev
+#--system --ignore-pipfile --deploy
 RUN pipenv run make owca_package
 
 # Builing final container that consists of owca only.
 FROM centos:7
 
-RUN yum install -y epel-release python36 makecache
+ENV CONFIG=/etc/owca/owca_config.yml \
+    LOG=info \
+    EXTRA_COMPONENT=example.external_package:ExampleDetector
 
-# Copy owca binary and its configuration.
-COPY --from=rpc-perf /owca/dist/owca.pex /usr/bin/
-# Prepare directory for owca configuration
-RUN mkdir /etc/owca
-# Create owca group to enable running OWCA as non-root
-#RUN groupadd owca
-# Create owca user to enable running OWCA as non-root
-USER owca
+RUN yum install -y epel-release
+RUN yum install -y python36
 
-#  Set "0" as content of perf_event_paranoid to enable running OWCA as non-root
-RUN sudo sh -c 'echo 0 >/proc/sys/kernel/perf_event_paranoid'
+COPY --from=owca /owca/dist/owca.pex /usr/bin/
 
-# Changing ownership of mon_groups enables creating mon_groups by non-root user
-RUN sudo chown -R owca:owca /sys/fs/resctrl/mon_groups
+#USER owca
 
-COPY config.yml.j2 /etc/owca/owca_config.yml
-
-RUN mkdir /var/lib/owca && sudo chown -R owca:owca /var/lib/owca
-
-# Prepare service under systemd.
-COPY owca.service.j2 /etc/systemd/system/owca.service
-# Reload systemd and restart owca service
-RUN sudo systemd reload owca
-
-
-
+ENTRYPOINT \
+    python36 /usr/bin/owca.pex \
+        --config $CONFIG \
+        --register $EXTRA_COMPONENT \
+        --log $LOG \
+        -0 \
+    && /bin/bash
