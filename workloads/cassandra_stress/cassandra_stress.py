@@ -54,16 +54,16 @@ cassandra_warmup_container = {
     "name": "cassandra-warmuper",
     "image": image_name + ':' + image_tag,
     "securityContext": securityContext,
-    "command": wait_for_cassandra_cmd}
+    "command": cassandra_warmup_cmd}
 initContainers.append(cassandra_warmup_container)
 
 
-cassandra_stress_cmd = ['"while true; do cassandra-stress mixed duration=90s '
+cassandra_stress_cmd = ('"while true; do cassandra-stress mixed duration=90s '
                         '-pop seq=1..{} -node {} -port native={} -rate '
                         'threads={}; done"'.format(number_of_rows,
                                                    application_host_ip,
                                                    communication_port,
-                                                   threads)]
+                                                   threads))
 cmd = """/usr/bin/cassandra_stress_wrapper.pex \
 --command '{cassandra_stress_cmd}' \
 --metric_name_prefix 'cassandra_'  \
