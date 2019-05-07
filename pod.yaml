@@ -17,7 +17,7 @@ spec:
 
   containers:
     - name: owca
-      image: 100.64.176.12:80/owca:ae2ad838bad3accc83b384c679b45496a25e0558
+      image: 100.64.176.12:80/owca:38b0b6bc964a3ea631d4ceadc7c2fad6b2b4d8f2
       env:
         - name: LOG
           value: debug
