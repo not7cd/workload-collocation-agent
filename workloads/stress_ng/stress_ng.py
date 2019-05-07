@@ -48,4 +48,6 @@ stress_ng_run_cmd = """/usr/bin/stress_ng_wrapper.pex --command '{stress_ng_cmd}
 command.append(stress_ng_run_cmd)
 
 json_format = json.dumps(pod)
+import sys
+print(json.dumps(pod, indent=4), file=sys.stderr)
 print(json_format)

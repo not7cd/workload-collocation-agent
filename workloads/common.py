@@ -152,6 +152,7 @@ pod = {
         "containers": containers,
         "nodeSelector": {
             "own_ip": own_ip
-        }
+        },
+        "terminationGracePeriodSeconds": 5
     }
 }
