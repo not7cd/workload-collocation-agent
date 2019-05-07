@@ -11,18 +11,19 @@ spec:
   hostPID: true
   hostIPC: true
   hostNetwork: true
+  terminationGracePeriodSeconds: 0
+  nodeSelector:
+    own_ip: 100.64.176.33
+
   containers:
     - name: owca
-      image: owca:0.2 #100.64.176.12:80/owca
+      image: 100.64.176.12:80/owca:ae2ad838bad3accc83b384c679b45496a25e0558
       env:
         - name: LOG
           value: debug
       resources:
-#        limits:
-#          memory: 200Mi
         requests:
           cpu: 500m
-          memory: 500Mi
       volumeMounts:
         - name: kubeletcert
           mountPath: /etc/kubernetes/ssl/
@@ -30,8 +31,6 @@ spec:
           mountPath: /etc/owca/
         - name: varlibowca
           mountPath: /var/lib/owca
-        - name: logstorage
-          mountPath: /var/log
         - name: cgroup
           mountPath: /sys/fs/cgroup/
     - name: node-exporter
@@ -51,17 +50,11 @@ spec:
         - containerPort: 9100
           protocol: TCP
       resources:
-#        limits:
-#          cpu: 100m
-#          memory: 100Mi
         requests:
-          cpu: 1
-          memory: 1
+          cpu: 500m
       volumeMounts:
         - name: varlibowca
           mountPath: /var/lib/owca
-        - name: logstorage
-          mountPath: /var/log
         - name: dev
           mountPath: /host/dev
         - name: proc
@@ -71,15 +64,14 @@ spec:
         - name: rootfs
           mountPath: /rootfs
   volumes:
+    #### owca
     - name: kubeletcert
       hostPath:
         path: /etc/kubernetes/ssl/
     - name: owcaconfig
-      hostPath:
-        path: /etc/owca/
-    - name: logstorage
-      hostPath:
-        path: /var/log
+      configMap:
+        name: owca-config
+    #### shared
     - name: varlibowca
       hostPath:
         path: /var/lib/owca
@@ -87,7 +79,7 @@ spec:
     - name: cgroup
       hostPath:
         path: /sys/fs/cgroup/
-    #      node_exporter
+    #### node_exporter
     - name: proc
       hostPath:
         path: /proc

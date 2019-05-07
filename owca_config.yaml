@@ -1,0 +1,83 @@
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+    name: owca-config
+
+data:
+  # runner: !AllocationRunner
+  #   node: !KubernetesNode
+  #     # We support two options: cgroupfs, systemd.
+  #     cgroup_driver: cgroupfs
+  #
+  #     # Fill needed PATH to key and certificate to access kubelet.
+  #     client_private_key: "$PATH/apiserver-kubelet-client.key"
+  #     client_cert: "$PATH/apiserver-kubelet-client.crt"
+  #
+  #     # If the kubelete agent does not listen on localhost, 
+  #     #   the endpoint must be provided.
+  #     kubelet_endpoint: "https://$IP:10250"
+  #
+  #     # List of namespaces to monitor pods in.
+  #     monitored_namespaces: ["default"]
+  #
+  #   metrics_storage: !LogStorage
+  #     output_filename: metrics.logs
+  #   anomalies_storage: !LogStorage
+  #     output_filename: anomalies.logs
+  #
+  #   allocator: !StaticAllocator
+  #     config: "$PATH/static_alloc_config.yaml"
+  #   allocations_storage: !KafkaStorage
+  #     topic: owca_allocations
+  #     max_timeout_in_seconds: 5.
+  #
+  owca_config.yml: |
+
+    runner: !AllocationRunner
+      rdt_enabled: false
+      node: !KubernetesNode
+        # We support two options: cgroupfs, systemd.
+        cgroup_driver: cgroupfs
+
+        # Fill needed PATH to key and certificate to access kubelet.
+        client_private_key: "/etc/kubernetes/ssl/apiserver-kubelet-client.key" #"$PATH/apiserver-kubelet-client.key"
+        client_cert: "/etc/kubernetes/ssl/apiserver-kubelet-client.crt" # "$PATH/apiserver-kubelet-client.crt"
+
+        # If the kubelet agent does not listen on localhost  the endpoint must be provided.
+        kubelet_endpoint: "https://100.64.176.33:10250" # {{own_ip}}
+
+        # List of namespaces to monitor pods in.
+        monitored_namespaces: ["kubecon-demo"]
+
+      # TODO: Create files metrics.prom and anomalies.prom
+      metrics_storage: !LogStorage
+        overwrite: True
+        output_filename: metrics.prom
+      anomalies_storage: !LogStorage
+        overwrite: True
+        output_filename: anomalies.prom
+      allocations_storage: !LogStorage
+        overwrite: True
+        output_filename: allocations.prom
+
+      allocator: !StaticAllocator
+        rules: 
+        - name: default rule for all
+          allocations:
+            cpu_quota: 1.0
+            cpu_shares: 10
+
+        # Alternate way to provide allocations rules.
+        config: "/etc/owca/static_allocator.yml"
+
+      extra_labels:
+        env_uniq_id: '33'
+        own_ip: '100.64.176.33'
+
+  static_allocator.yml: |
+
+    # As `labels` fields is not defined, this rule applies to all tasks.
+    - name: default rule for all
+      allocations:
+        cpu_quota: 1.0
+        cpu_shares: 10
