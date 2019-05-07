@@ -4,71 +4,40 @@ metadata:
     name: owca-config
 
 data:
-  # runner: !AllocationRunner
-  #   node: !KubernetesNode
-  #     # We support two options: cgroupfs, systemd.
-  #     cgroup_driver: cgroupfs
-  #
-  #     # Fill needed PATH to key and certificate to access kubelet.
-  #     client_private_key: "$PATH/apiserver-kubelet-client.key"
-  #     client_cert: "$PATH/apiserver-kubelet-client.crt"
-  #
-  #     # If the kubelete agent does not listen on localhost, 
-  #     #   the endpoint must be provided.
-  #     kubelet_endpoint: "https://$IP:10250"
-  #
-  #     # List of namespaces to monitor pods in.
-  #     monitored_namespaces: ["default"]
-  #
-  #   metrics_storage: !LogStorage
-  #     output_filename: metrics.logs
-  #   anomalies_storage: !LogStorage
-  #     output_filename: anomalies.logs
-  #
-  #   allocator: !StaticAllocator
-  #     config: "$PATH/static_alloc_config.yaml"
-  #   allocations_storage: !KafkaStorage
-  #     topic: owca_allocations
-  #     max_timeout_in_seconds: 5.
-  #
   owca_config.yml: |
 
     runner: !AllocationRunner
-      rdt_enabled: false
+      action_delay: 5.0
+      rdt_enabled: true
+      enable_derived_metrics: True
       node: !KubernetesNode
         # We support two options: cgroupfs, systemd.
         cgroup_driver: cgroupfs
-
-        # Fill needed PATH to key and certificate to access kubelet.
-        client_private_key: "/etc/kubernetes/ssl/apiserver-kubelet-client.key" #"$PATH/apiserver-kubelet-client.key"
-        client_cert: "/etc/kubernetes/ssl/apiserver-kubelet-client.crt" # "$PATH/apiserver-kubelet-client.crt"
-
-        # If the kubelet agent does not listen on localhost  the endpoint must be provided.
-        kubelet_endpoint: "https://100.64.176.33:10250" # {{own_ip}}
-
-        # List of namespaces to monitor pods in.
+        client_private_key: "/etc/kubernetes/ssl/apiserver-kubelet-client.key"
+        client_cert: "/etc/kubernetes/ssl/apiserver-kubelet-client.crt"
+        kubelet_endpoint: "https://100.64.176.33:10250" 
         monitored_namespaces: ["kubecon-demo"]
 
       # TODO: Create files metrics.prom and anomalies.prom
       metrics_storage: !LogStorage
         overwrite: True
-        output_filename: metrics.prom
+        output_filename: /var/lib/owca/metrics.prom
       anomalies_storage: !LogStorage
         overwrite: True
-        output_filename: anomalies.prom
+        output_filename: /var/lib/owca/anomalies.prom
       allocations_storage: !LogStorage
         overwrite: True
-        output_filename: allocations.prom
+        output_filename: /var/lib/owca/allocations.prom
 
-      allocator: !StaticAllocator
-        rules: 
-        - name: default rule for all
-          allocations:
-            cpu_quota: 1.0
-            cpu_shares: 10
-
-        # Alternate way to provide allocations rules.
-        config: "/etc/owca/static_allocator.yml"
+      # allocator: !StaticAllocator
+      #   rules: 
+      #   - name: Static default rule for all tasks.
+      #     allocations:
+      #       cpu_quota: 1.0
+      #       cpu_shares: 10
+      #   # Alternate way to provide allocations rules.
+      #   config: "/etc/owca/static_allocator.yml"
+      allocator: !ExampleAllocator
 
       extra_labels:
         env_uniq_id: '33'
@@ -77,7 +46,25 @@ data:
   static_allocator.yml: |
 
     # As `labels` fields is not defined, this rule applies to all tasks.
-    - name: default rule for all
+    - name: Dynamic rules loaded from shared file.
+      # Labels selector to apply allocations rules only for specified tasks.
+      labels:
+        task_kind: best-effort
       allocations:
-        cpu_quota: 1.0
-        cpu_shares: 10
+        cpu_quota: 0.02
+        cpu_shares: 2
+        rdt:
+          mb: 'MB:0=60'
+
+  example_allocator.py: |
+
+    from owca.allocators import Allocator
+
+    class ExampleAllocator(Allocator):
+
+        def allocate(self, platform, tasks_measurements,
+                     tasks_resources,tasks_labels, tasks_allocations
+            ):
+            return {'5f451f78-7101-11e9-8882-246e96663c22': {'cpu_quota': 0.3}}, [], []
+
+

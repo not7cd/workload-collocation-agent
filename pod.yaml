@@ -4,6 +4,7 @@ metadata:
   name: owca
   labels:
     app: myapp
+    task_kind: best-effort
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "9100"
@@ -21,18 +22,37 @@ spec:
       env:
         - name: LOG
           value: debug
+
+        # Example of providing simple python plugin.
+        - name: PEX_INHERIT_PATH
+          value: 'true'
+        - name: EXTRA_COMPONENT
+          value: example_allocator:ExampleAllocator
+        - name: PYTHONPATH
+          value: /
       resources:
         requests:
           cpu: 500m
       volumeMounts:
         - name: kubeletcert
           mountPath: /etc/kubernetes/ssl/
-        - name: owcaconfig
+        - name: owca-config
           mountPath: /etc/owca/
         - name: varlibowca
           mountPath: /var/lib/owca
         - name: cgroup
           mountPath: /sys/fs/cgroup/
+        - name: resctrl
+          mountPath: /sys/fs/resctrl/
+
+        # Allocator plugin can be simple python module.
+        - name: owca-allocator-plugin
+          mountPath: /example_allocator.py
+          subPath: example_allocator.py
+      ### DEBUG SLEEP
+      # command:
+      #   - sleep
+      #   - '1000'
     - name: node-exporter
       image: prom/node-exporter@sha256:ffc3e0adf58771cb2097aa0b074a6fe68b4925ba75c2e1c41f41ae656eebee11
       securityContext:
@@ -68,17 +88,22 @@ spec:
     - name: kubeletcert
       hostPath:
         path: /etc/kubernetes/ssl/
-    - name: owcaconfig
+    - name: owca-config
       configMap:
         name: owca-config
+    - name: owca-allocator-plugin
+      configMap:
+        name: owca-allocator-plugin
+    - name: cgroup
+      hostPath:
+        path: /sys/fs/cgroup/
+    - name: resctrl
+      hostPath:
+        path: /sys/fs/resctrl/
     #### shared
     - name: varlibowca
       hostPath:
         path: /var/lib/owca
-    # control cgroup
-    - name: cgroup
-      hostPath:
-        path: /sys/fs/cgroup/
     #### node_exporter
     - name: proc
       hostPath:

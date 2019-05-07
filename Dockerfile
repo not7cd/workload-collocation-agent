@@ -42,12 +42,9 @@ RUN yum install -y python36
 
 COPY --from=owca /owca/dist/owca.pex /usr/bin/
 
-#USER owca
-
 ENTRYPOINT \
     python36 /usr/bin/owca.pex \
         --config $CONFIG \
         --register $EXTRA_COMPONENT \
         --log $LOG \
-        -0 \
-    && /bin/bash
+        --root
