@@ -321,7 +321,9 @@ def assert_metric(got_metrics: List[Metric],
                 found_metric = got_metric
                 break
     if not found_metric:
-        raise AssertionError('metric %r not found' % expected_metric_name)
+        raise AssertionError(
+                'metric %r not found (labels=%s)' %
+                (expected_metric_name, expected_metric_some_labels))
     # Check values as well
     if expected_metric_value is not None:
         assert found_metric.value == expected_metric_value, \

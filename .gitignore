@@ -26,3 +26,4 @@ run_workloads.retry
 .pex-build
 unit_results.xml
 /workloads/.pod_definition__*
+metrics.prom
