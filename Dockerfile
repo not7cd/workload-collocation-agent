@@ -34,8 +34,8 @@ RUN pipenv run make owca_package
 FROM centos:7
 
 ENV CONFIG=/etc/owca/owca_config.yml \
-    LOG=info \
-    EXTRA_COMPONENT=example.external_package:ExampleDetector
+    EXTRA_COMPONENT=example.external_package:ExampleDetector \
+    LOG=info
 
 RUN yum install -y epel-release
 RUN yum install -y python36

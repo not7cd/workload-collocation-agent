@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: owca
+  labels:
+    app: myapp
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9100"
+spec:
+  hostPID: true
+  hostIPC: true
+  hostNetwork: true
+  containers:
+    - name: owca
+      image: owca:0.2 #100.64.176.12:80/owca
+      env:
+        - name: LOG
+          value: debug
+      resources:
+#        limits:
+#          memory: 200Mi
+        requests:
+          cpu: 500m
+          memory: 500Mi
+      volumeMounts:
+        - name: kubeletcert
+          mountPath: /etc/kubernetes/ssl/
+        - name: owcaconfig
+          mountPath: /etc/owca/
+        - name: varlibowca
+          mountPath: /var/lib/owca
+        - name: logstorage
+          mountPath: /var/log
+        - name: cgroup
+          mountPath: /sys/fs/cgroup/
+    - name: node-exporter
+      image: prom/node-exporter@sha256:ffc3e0adf58771cb2097aa0b074a6fe68b4925ba75c2e1c41f41ae656eebee11
+      securityContext:
+        privileged: true
+      args:
+        - --collector.procfs
+        - /host/proc
+        - --collector.sysfs
+        - /host/sys
+        - --collector.filesystem.ignored-mount-points
+        - '"^/(sys|proc|dev|host|etc)($|/)"'
+        - --collector.textfile.directory
+        - /var/lib/owca
+      ports:
+        - containerPort: 9100
+          protocol: TCP
+      resources:
+#        limits:
+#          cpu: 100m
+#          memory: 100Mi
+        requests:
+          cpu: 1
+          memory: 1
+      volumeMounts:
+        - name: varlibowca
+          mountPath: /var/lib/owca
+        - name: logstorage
+          mountPath: /var/log
+        - name: dev
+          mountPath: /host/dev
+        - name: proc
+          mountPath: /host/proc
+        - name: sys
+          mountPath: /host/sys
+        - name: rootfs
+          mountPath: /rootfs
+  volumes:
+    - name: kubeletcert
+      hostPath:
+        path: /etc/kubernetes/ssl/
+    - name: owcaconfig
+      hostPath:
+        path: /etc/owca/
+    - name: logstorage
+      hostPath:
+        path: /var/log
+    - name: varlibowca
+      hostPath:
+        path: /var/lib/owca
+    # control cgroup
+    - name: cgroup
+      hostPath:
+        path: /sys/fs/cgroup/
+    #      node_exporter
+    - name: proc
+      hostPath:
+        path: /proc
+    - name: dev
+      hostPath:
+        path: /dev
+    - name: sys
+      hostPath:
+        path: /sys
+    - name: rootfs
+      hostPath:
+        path: /

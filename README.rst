@@ -51,6 +51,7 @@ OWCA is targeted at and tested on Centos 7.5.
     # Install required software.
     sudo yum install epel-release -y
     sudo yum install git python36 -y
+    sudo yum install make which python-pip -y
     python3.6 -m ensurepip --user
     python3.6 -m pip install --user pipenv
 

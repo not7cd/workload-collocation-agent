@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: owca
-  namespace: kube-system
-  labels:
-    name: owca-node-exporter
+#  namespace: kube-system
+#  labels:
+#    name: owca-node-exporter
 spec:
   selector:
     matchLabels:
@@ -12,36 +12,36 @@ spec:
   template:
     metadata:
       labels:
-        name: node
-    hostPID: true
-    hostIPC: true
-    hostNetwork: true
+        name: owca
+#    hostPID: true
+#    hostIPC: true
+#    hostNetwork: true
     spec:
-      tolerations:
-      - key: node-role.kubernetes.io/master
-        effect: NoSchedule
+#      tolerations:
+#      - key: node-role.kubernetes.io/master
+#        effect: NoSchedule
 
-      initContainers:
-        - command:
-            - sh
-            - -c
-            - echo 0 > /proc/sys/kernel/perf_event_paranoid;
-            - sysctl -w proc.sys.kernel.perf_event_paranoid=0;
-            - chown -R owca:owca /sys/fs/resctrl/mon_groups
-            # Create owca group to enable running OWCA as non-root
-              #RUN groupadd owca
-              # Create owca user to enable running OWCA as non-root
-              #RUN adduser -p zxc owca
-              #RUN usermod -aG wheel owca
+#      initContainers:
+#        - command:
+#            - sh
+#            - -c
+#            - echo 0 > /proc/sys/kernel/perf_event_paranoid;
+#            - sysctl -w proc.sys.kernel.perf_event_paranoid=0;
+#            - chown -R owca:owca /sys/fs/resctrl/mon_groups
+#            # Create owca group to enable running OWCA as non-root
+#              #RUN groupadd owca
+#              # Create owca user to enable running OWCA as non-root
+#              #RUN adduser -p zxc owca
+#              #RUN usermod -aG wheel owca
+#
+#              # Changing ownership of mon_groups enables creating mon_groups by non-root user
+#            #RUN chown -R owca:owca /sys/fs/resctrl/mon_groups
+#          image: centos:7
+#          imagePullPolicy: IfNotPresent
+#          name: sysctl
+#          securityContext:
+#            privileged: true
 
-              # Changing ownership of mon_groups enables creating mon_groups by non-root user
-            #RUN chown -R owca:owca /sys/fs/resctrl/mon_groups
-          image: centos:7
-          imagePullPolicy: IfNotPresent
-          name: sysctl
-          securityContext:
-            privileged: true
-        containers:
       containers:
 
       - name: owca
@@ -62,41 +62,41 @@ spec:
         - name: logstorage
           mountPath: /var/log
 
-      - name: node-exporter
-        image: prom/node-exporter@sha256:ffc3e0adf58771cb2097aa0b074a6fe68b4925ba75c2e1c41f41ae656eebee11
-        securityContext:
-          privileged: true
-        args:
-          - --collector.procfs
-          - /host/proc
-          - --collector.sysfs
-          - /host/sys
-          - --collector.filesystem.ignored-mount-points
-          - '"^/(sys|proc|dev|host|etc)($|/)"'
-        ports:
-          - containerPort: 9100
-            protocol: TCP
-        resources:
-          limits:
-            cpu: 100m
-            memory: 100Mi
-          requests:
-            cpu: 10m
-            memory: 100Mi
-        volumeMounts:
-          - name: varlibowca
-            mountPath: /var/lib/owca
-          - name: logstorage
-            mountPath: /var/log
-          - name: dev
-            mountPath: /host/dev
-          - name: proc
-            mountPath: /host/proc
-          - name: sys
-            mountPath: /host/sys
-          - name: rootfs
-            mountPath: /rootfs
-      terminationGracePeriodSeconds: 30
+#      - name: node-exporter
+#        image: prom/node-exporter@sha256:ffc3e0adf58771cb2097aa0b074a6fe68b4925ba75c2e1c41f41ae656eebee11
+#        securityContext:
+#          privileged: true
+#        args:
+#          - --collector.procfs
+#          - /host/proc
+#          - --collector.sysfs
+#          - /host/sys
+#          - --collector.filesystem.ignored-mount-points
+#          - '"^/(sys|proc|dev|host|etc)($|/)"'
+#        ports:
+#          - containerPort: 9100
+#            protocol: TCP
+#        resources:
+#          limits:
+#            cpu: 100m
+#            memory: 100Mi
+#          requests:
+#            cpu: 10m
+#            memory: 100Mi
+#        volumeMounts:
+#          - name: varlibowca
+#            mountPath: /var/lib/owca
+#          - name: logstorage
+#            mountPath: /var/log
+#          - name: dev
+#            mountPath: /host/dev
+#          - name: proc
+#            mountPath: /host/proc
+#          - name: sys
+#            mountPath: /host/sys
+#          - name: rootfs
+#            mountPath: /rootfs
+#      terminationGracePeriodSeconds: 30
       volumes:
       - name: kubeletcert
         hostPath:
@@ -110,6 +110,9 @@ spec:
       - name: varlibowca
         hostPath:
           path: /var/lib/owca
+      - name: cgroup
+        hostPath:
+          path: /sys/fs/cgroup/
 #      node_exporter
       - name: proc
         hostPath:

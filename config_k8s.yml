@@ -10,15 +10,18 @@ runner: !DetectionRunner
 
     # If the kubelete agent does not listen on localhost,
     #   the endpoint must be provided.
-    kubelet_endpoint: "https://192.168.121.128:10250"
+    kubelet_endpoint: "https://192.168.121.249:10250" # {{own_ip}}
 
     # List of namespaces to monitor pods in.
     monitored_namespaces: ["default"]
 
+# TODO: Create files metrics.prom and anomalies.prom
   metrics_storage: !LogStorage
-    output_filename: metrics.logs
+    overwrite: True
+    output_filename: metrics.prom
   anomalies_storage: !LogStorage
-    output_filename: anomalies.logs
+    overwrite: True
+    output_filename: anomalies.prom
 
   detector: !ExampleDetector
 
