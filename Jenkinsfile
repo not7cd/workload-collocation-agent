@@ -59,8 +59,8 @@ pipeline {
                     steps {
                     withCredentials([file(credentialsId: 'kaggle.json', variable: 'KAGGLE_JSON')]) {
                     sh '''
-                    IMAGE_NAME=${DOCKER_REPOSITORY_URL}/owca/tensorflow_train:${GIT_COMMIT}
-                    IMAGE_DIR=${WORKSPACE}/workloads/tensorflow_train
+                    IMAGE_NAME=${DOCKER_REPOSITORY_URL}/owca/tensorflow_benchmark:${GIT_COMMIT}
+                    IMAGE_DIR=${WORKSPACE}/workloads/tensorflow_benchmark
                     cp -r dist ${IMAGE_DIR}
                     cp -f ${KAGGLE_JSON} ${IMAGE_DIR}/kaggle.json
                     docker build -t ${IMAGE_NAME} -f ${IMAGE_DIR}/Dockerfile ${IMAGE_DIR}
