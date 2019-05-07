@@ -37,7 +37,7 @@ class ExampleAllocator(Allocator):
         for task in measurements:
             if labels[task].get('task_kind') == 'latency-critical':
                 ipc = measurements[task].get('ipc', 1.0)
-                log.debug('found latency critical task with ipc:',  ipc)
+                log.debug('found latency critical task with ipc: %r',  ipc)
                 if ipc < 1.:
                     total_preasure += 1/measurements[task]['ipc']
         metrics = [
