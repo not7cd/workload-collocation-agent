@@ -22,7 +22,6 @@ spec:
       env:
         - name: LOG
           value: debug
-
         # Example of providing simple python plugin.
         - name: PEX_INHERIT_PATH
           value: 'true'
