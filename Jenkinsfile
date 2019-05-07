@@ -38,7 +38,7 @@ pipeline {
             steps {
                 sh '''
                 IMAGE_NAME=${DOCKER_REPOSITORY_URL}/owca:${GIT_COMMIT}
-                IMAGE_DIR=${WORKSPACE}
+                IMAGE_DIR=${WORKSPACE}/owca
                 cp -r dist ${IMAGE_DIR}
                 docker build -t ${IMAGE_NAME} -f ${IMAGE_DIR}/Dockerfile ${IMAGE_DIR}
                 docker push ${IMAGE_NAME}
