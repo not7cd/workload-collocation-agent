@@ -22,9 +22,9 @@ RUN yum -y install python36 python-pip which make git
 
 RUN pip install pipenv
 
+WORKDIR /owca
 COPY . .
 #RUN git clone https://github.com/intel/owca.git
-WORKDIR /owca
 
 RUN pipenv install --dev
 #--system --ignore-pipfile --deploy
