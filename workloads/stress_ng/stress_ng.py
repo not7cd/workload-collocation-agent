@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import sys
 from common import application, command, json, pod, wrapper_kafka_brokers, wrapper_log_level, \
     wrapper_kafka_topic, wrapper_labels
 
@@ -48,6 +49,5 @@ stress_ng_run_cmd = """/usr/bin/stress_ng_wrapper.pex --command '{stress_ng_cmd}
 command.append(stress_ng_run_cmd)
 
 json_format = json.dumps(pod)
-import sys
 print(json.dumps(pod, indent=4), file=sys.stderr)
 print(json_format)
