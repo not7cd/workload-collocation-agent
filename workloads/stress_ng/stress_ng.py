@@ -27,9 +27,9 @@ stressor = os.environ.get('stressor') or 'stream'
 number_workers = int(os.environ.get('number_workers') or 1)
 # ----------------------------------------------------------------------------------------------------
 
-stress_ng_cmd = """""while true; do stress-ng --{}={} --timeout={} \
---metrics --metrics-brief -Y /dev/stdout;done""""".format(
-    stressor, number_workers, timeout)
+stress_ng_cmd = ('"while true; do stress-ng --{}={} --timeout={}'
+                 ' --metrics --metrics-brief -Y /dev/stdout;done"').format(
+                    stressor, number_workers, timeout)
 
 stress_ng_run_cmd = """/usr/bin/stress_ng_wrapper.pex --command '{stress_ng_cmd}' \
 --metric_name_prefix {metric_name_prefix} \
