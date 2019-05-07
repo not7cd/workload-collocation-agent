@@ -26,8 +26,8 @@ from owca.containers import ContainerInterface, Container
 from owca.detectors import convert_anomalies_to_metrics, \
     update_anomalies_metrics_with_task_information
 from owca.kubernetes import have_tasks_qos_label, are_all_tasks_of_single_qos
-from owca.nodes import Task
 from owca.metrics import Metric, MetricType
+from owca.nodes import Task
 from owca.resctrl_allocations import (RDTAllocationValue, RDTGroups, validate_mb_string,
                                       validate_l3_string)
 from owca.runners.detection import AnomalyStatistics
