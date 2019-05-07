@@ -1,0 +1,30 @@
+runner: !DetectionRunner
+  rdt_enabled: false
+  node: !KubernetesNode
+    # We support two options: cgroupfs, systemd.
+    cgroup_driver: cgroupfs
+
+    # Fill needed PATH to key and certificate to access kubelet.
+    client_private_key: "/etc/kubernetes/ssl/apiserver-kubelet-client.key" #"$PATH/apiserver-kubelet-client.key"
+    client_cert: "/etc/kubernetes/ssl/apiserver-kubelet-client.crt" # "$PATH/apiserver-kubelet-client.crt"
+
+    # If the kubelete agent does not listen on localhost,
+    #   the endpoint must be provided.
+    kubelet_endpoint: "https://192.168.121.249:10250" # {{own_ip}}
+
+    # List of namespaces to monitor pods in.
+    monitored_namespaces: ["default"]
+
+# TODO: Create files metrics.prom and anomalies.prom
+  metrics_storage: !LogStorage
+    overwrite: True
+    output_filename: metrics.prom
+  anomalies_storage: !LogStorage
+    overwrite: True
+    output_filename: anomalies.prom
+
+  detector: !ExampleDetector
+
+  extra_labels:
+    env_uniq_id: "{{env_uniq_id}}"
+    own_ip: "{{own_ip}}"

@@ -34,6 +34,17 @@ pipeline {
                 archiveArtifacts(artifacts: "dist/**")
             }
         }
+        stage("Build and push OWCA Docker image") {
+            steps {
+                sh '''
+                IMAGE_NAME=${DOCKER_REPOSITORY_URL}/owca:${GIT_COMMIT}
+                IMAGE_DIR=${WORKSPACE}/
+
+                docker build -t ${IMAGE_NAME} -f ${IMAGE_DIR}/Dockerfile ${IMAGE_DIR}
+                docker push ${IMAGE_NAME}
+                '''
+            }
+        }
         stage("Building Docker images and do tests in parallel") {
             parallel {
                 stage("Using tester") {
