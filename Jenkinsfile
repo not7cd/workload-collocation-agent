@@ -69,18 +69,6 @@ pipeline {
                     }
                     }
                 }
-                stage("Build and push Tensorflow Benchmark Docker image") {
-                    when {expression{return params.BUILD_IMAGES}}
-                    steps {
-                    sh '''
-                    IMAGE_NAME=${DOCKER_REPOSITORY_URL}/owca/tensorflow_benchmark:${GIT_COMMIT}
-                    IMAGE_DIR=${WORKSPACE}/workloads/tensorflow_benchmark
-                    cp -r dist ${IMAGE_DIR}
-                    docker build -t ${IMAGE_NAME} -f ${IMAGE_DIR}/Dockerfile ${IMAGE_DIR}
-                    docker push ${IMAGE_NAME}
-                    '''
-                    }
-                }
                 stage("Build and push Redis Docker image") {
                     when {expression{return params.BUILD_IMAGES}}
                     steps {
