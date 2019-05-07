@@ -35,7 +35,8 @@ FROM centos:7
 
 ENV CONFIG=/etc/owca/owca_config.yml \
     EXTRA_COMPONENT=example.external_package:ExampleDetector \
-    LOG=info
+    LOG=info \
+    EXTRA_OPTIONS=
 
 RUN yum install -y epel-release
 RUN yum install -y python36
@@ -47,4 +48,6 @@ ENTRYPOINT \
         --config $CONFIG \
         --register $EXTRA_COMPONENT \
         --log $LOG \
-        --root
+        --root \
+        $EXTRA_OPTIONS
+
