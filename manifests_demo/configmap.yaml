@@ -1,10 +1,10 @@
 kind: ConfigMap 
 apiVersion: v1 
 metadata:
-    name: owca-config
+    name: wca-config
     namespace: wca
 data:
-  owca_config.yml: |
+  wca_config.yml: |
 
     runner: !AllocationRunner
       action_delay: 5.0
@@ -18,16 +18,15 @@ data:
         kubelet_endpoint: "https://100.64.176.33:10250" 
         monitored_namespaces: ["kubecon-demo"]
 
-      # TODO: Create files metrics.prom and anomalies.prom
       metrics_storage: !LogStorage
         overwrite: True
-        output_filename: /var/lib/owca/metrics.prom
+        output_filename: /var/lib/wca/metrics.prom
       anomalies_storage: !LogStorage
         overwrite: True
-        output_filename: /var/lib/owca/anomalies.prom
+        output_filename: /var/lib/wca/anomalies.prom
       allocations_storage: !LogStorage
         overwrite: True
-        output_filename: /var/lib/owca/allocations.prom
+        output_filename: /var/lib/wca/allocations.prom
 
       # allocator: !StaticAllocator
       #   rules: 
@@ -36,16 +35,19 @@ data:
       #       cpu_quota: 1.0
       #       cpu_shares: 10
       #   # Alternate way to provide allocations rules.
-      #   config: "/etc/owca/static_allocator.yml"
+      #   config: "/etc/wca/static_allocator.yml"
       allocator: !ExampleAllocator
 
       extra_labels:
         env_uniq_id: '33'
         own_ip: '100.64.176.33'
 
+
+  #
+  # Example of configuring of built-in rules based allocator.
+  # 
   static_allocator.yml: |
 
-    # As `labels` fields is not defined, this rule applies to all tasks.
     - name: Dynamic rules loaded from shared file.
       # Labels selector to apply allocations rules only for specified tasks.
       labels:
@@ -56,15 +58,15 @@ data:
         rdt:
           mb: 'MB:0=60'
 
-  example_allocator.py: |
 
-    from owca.allocators import Allocator
+  #
+  # Example of dummy allocator, that justs returns hello_world metric.
 
-    class ExampleAllocator(Allocator):
-
-        def allocate(self, platform, tasks_measurements,
-                     tasks_resources,tasks_labels, tasks_allocations
-            ):
-            return {'5f451f78-7101-11e9-8882-246e96663c22': {'cpu_quota': 0.3}}, [], []
+  dummy_allocator.py: |
+    from wca.metrics import Metric
+    from wca.allocators import Allocator
+    class DummyAllocator(Allocator):
+        def allocate(self, *args):
+            return {}, [], [Metric('hello_world', 1)]
 
 

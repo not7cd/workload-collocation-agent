@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: owca
+  name: wca
   namespace: wca
   annotations:
     prometheus.io/scrape: "true"
@@ -15,7 +15,8 @@ spec:
     own_ip: 100.64.176.33
 
   containers:
-    - name: owca
+
+    - name: wca
       image: 100.64.176.12:80/owca:fbcc3e13699b14f448c19a03d5a522f5247ac39c
       env:
         - name: LOG
@@ -29,29 +30,23 @@ spec:
           value: /
         - name: EXTRA_OPTIONS
           value: '--log example_allocator:debug'
-      resources:
-        requests:
-          cpu: 500m
       volumeMounts:
         - name: kubeletcert
           mountPath: /etc/kubernetes/ssl/
-        - name: owca-config
-          mountPath: /etc/owca/
-        - name: varlibowca
-          mountPath: /var/lib/owca
+        - name: wca-config
+          mountPath: /etc/wca/
+        - name: var-lib-wca
+          mountPath: /var/lib/wca
         - name: cgroup
           mountPath: /sys/fs/cgroup/
         - name: resctrl
           mountPath: /sys/fs/resctrl/
 
         # Allocator plugin can be simple python module.
-        - name: owca-allocator-plugin
+        - name: wca-allocator-plugin
           mountPath: /example_allocator.py
           subPath: example_allocator.py
-      ### DEBUG SLEEP
-      # command:
-      #   - sleep
-      #   - '1000'
+
     - name: node-exporter
       image: prom/node-exporter@sha256:ffc3e0adf58771cb2097aa0b074a6fe68b4925ba75c2e1c41f41ae656eebee11
       securityContext:
@@ -64,16 +59,11 @@ spec:
         - --collector.filesystem.ignored-mount-points
         - '"^/(sys|proc|dev|host|etc)($|/)"'
         - --collector.textfile.directory
-        - /var/lib/owca
-      ports:
-        - containerPort: 9100
-          protocol: TCP
-      resources:
-        requests:
-          cpu: 500m
+        - /var/lib/wca
+
       volumeMounts:
-        - name: varlibowca
-          mountPath: /var/lib/owca
+        - name: var-lib-wca
+          mountPath: /var/lib/wca
         - name: dev
           mountPath: /host/dev
         - name: proc
@@ -82,27 +72,27 @@ spec:
           mountPath: /host/sys
         - name: rootfs
           mountPath: /rootfs
+
   volumes:
-    #### owca
-    - name: kubeletcert
-      hostPath:
-        path: /etc/kubernetes/ssl/
-    - name: owca-config
+    #### workload-collocation-agent
+    - name: wca-config
       configMap:
-        name: owca-config
-    - name: owca-allocator-plugin
+        name: wca-config
+    - name: wca-allocator-plugin
       configMap:
-        name: owca-allocator-plugin
+        name: wca-allocator-plugin
     - name: cgroup
       hostPath:
         path: /sys/fs/cgroup/
     - name: resctrl
       hostPath:
         path: /sys/fs/resctrl/
-    #### shared
-    - name: varlibowca
+    - name: kubeletcert
       hostPath:
-        path: /var/lib/owca
+        path: /etc/kubernetes/ssl/
+    #### common
+    - name: var-lib-wca
+      emptyDir: {}
     #### node_exporter
     - name: proc
       hostPath:

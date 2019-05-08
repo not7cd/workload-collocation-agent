@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from owca.allocators import Allocator, RDTAllocation, Metric
+from wca.allocators import Allocator, RDTAllocation, Metric
 import logging
 log = logging.getLogger(__name__)
 

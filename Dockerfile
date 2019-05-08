@@ -13,8 +13,8 @@
 # limitations under the License.
 
 
-# Building owca.
-FROM centos:7 AS owca
+# Building wca.
+FROM centos:7 AS wca
 
 #RUN yum -y update
 RUN yum -y install epel-release
@@ -22,18 +22,17 @@ RUN yum -y install python36 python-pip which make git
 
 RUN pip install pipenv
 
-WORKDIR /owca
+WORKDIR /wca
 COPY . .
-#RUN git clone https://github.com/intel/owca.git
 
 RUN pipenv install --dev
 #--system --ignore-pipfile --deploy
-RUN pipenv run make owca_package
+RUN pipenv run make wca_package
 
 # Builing final container that consists of owca only.
 FROM centos:7
 
-ENV CONFIG=/etc/owca/owca_config.yml \
+ENV CONFIG=/etc/wca/wca_config.yml \
     EXTRA_COMPONENT=example.external_package:ExampleDetector \
     LOG=info \
     EXTRA_OPTIONS=
@@ -41,10 +40,10 @@ ENV CONFIG=/etc/owca/owca_config.yml \
 RUN yum install -y epel-release
 RUN yum install -y python36
 
-COPY --from=owca /owca/dist/owca.pex /usr/bin/
+COPY --from=wca /wca/dist/wca.pex /usr/bin/
 
 ENTRYPOINT \
-    python36 /usr/bin/owca.pex \
+    python36 /usr/bin/wca.pex \
         --config $CONFIG \
         --register $EXTRA_COMPONENT \
         --log $LOG \
