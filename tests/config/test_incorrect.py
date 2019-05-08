@@ -15,7 +15,7 @@
 
 from io import StringIO
 
-from owca import config
+from wca import config
 
 import pytest
 

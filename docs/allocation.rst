@@ -331,18 +331,18 @@ Returned ``TasksAllocations`` will be encoded in Prometheus exposition format:
 .. code-block:: ini
 
     # TYPE allocation gauge
-    allocation{allocation_type="cpu_quota",cores="28",cpus="56",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 1.0 1547663933289
-    allocation{allocation_type="cpu_shares",cores="28",cpus="56",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 0.5 1547663933289
-    allocation{allocation_type="rdt_l3_cache_ways",cores="28",cpus="56",domain_id="0",group_name="be",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 1 1547663933289
-    allocation{allocation_type="rdt_l3_cache_ways",cores="28",cpus="56",domain_id="1",group_name="be",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 1 1547663933289
-    allocation{allocation_type="rdt_l3_mask",cores="28",cpus="56",domain_id="0",group_name="be",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 2 1547663933289
-    allocation{allocation_type="rdt_l3_mask",cores="28",cpus="56",domain_id="1",group_name="be",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 2 1547663933289
+    allocation{allocation_type="cpu_quota",cores="28",cpus="56",host="igk-0107",wca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 1.0 1547663933289
+    allocation{allocation_type="cpu_shares",cores="28",cpus="56",host="igk-0107",wca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 0.5 1547663933289
+    allocation{allocation_type="rdt_l3_cache_ways",cores="28",cpus="56",domain_id="0",group_name="be",host="igk-0107",wca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 1 1547663933289
+    allocation{allocation_type="rdt_l3_cache_ways",cores="28",cpus="56",domain_id="1",group_name="be",host="igk-0107",wca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 1 1547663933289
+    allocation{allocation_type="rdt_l3_mask",cores="28",cpus="56",domain_id="0",group_name="be",host="igk-0107",wca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 2 1547663933289
+    allocation{allocation_type="rdt_l3_mask",cores="28",cpus="56",domain_id="1",group_name="be",host="igk-0107",wca_version="0.1.dev252+g7f83b7f",sockets="2",task_id="root-staging13-stress_ng-default--0-0-6d1f2268-c3dd-44fd-be0b-a83bd86b328d"} 2 1547663933289
 
     # TYPE allocation_duration gauge
-    allocation_duration{cores="28",cpus="56",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2"} 0.002111196517944336 1547663933289
+    allocation_duration{cores="28",cpus="56",host="igk-0107",wca_version="0.1.dev252+g7f83b7f",sockets="2"} 0.002111196517944336 1547663933289
 
     # TYPE allocations_count counter
-    allocations_count{cores="28",cpus="56",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2"} 660 1547663933289
+    allocations_count{cores="28",cpus="56",host="igk-0107",wca_version="0.1.dev252+g7f83b7f",sockets="2"} 660 1547663933289
 
     # TYPE allocations_ignored_count counter
-    allocations_ignored_count{cores="28",cpus="56",host="igk-0107",owca_version="0.1.dev252+g7f83b7f",sockets="2"} 0 1547663933289
+    allocations_ignored_count{cores="28",cpus="56",host="igk-0107",wca_version="0.1.dev252+g7f83b7f",sockets="2"} 0 1547663933289

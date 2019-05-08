@@ -16,11 +16,11 @@
 import time
 import socket
 import hashlib
-from owca.metrics import Metric
-from owca.detectors import (TasksMeasurements, ContentionAnomaly,
-                            ContendedResource, AnomalyDetector, TasksResources, TasksLabels)
-from owca.allocators import Allocator, AllocationType, RDTAllocation
-from owca.platforms import Platform
+from wca.metrics import Metric
+from wca.detectors import (TasksMeasurements, ContentionAnomaly,
+                           ContendedResource, AnomalyDetector, TasksResources, TasksLabels)
+from wca.allocators import Allocator, AllocationType, RDTAllocation
+from wca.platforms import Platform
 
 import logging
 log = logging.getLogger(__name__)

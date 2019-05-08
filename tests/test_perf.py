@@ -20,12 +20,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from owca import metrics
-from owca import perf
-from owca import perf_const as pc
-from owca.metrics import MetricName, DerivedMetricName, DerivedMetricsGenerator
-from owca.perf import _parse_raw_event_name
-from owca.testing import create_open_mock
+from wca import metrics
+from wca import perf
+from wca import perf_const as pc
+from wca.metrics import MetricName, DerivedMetricName, DerivedMetricsGenerator
+from wca.perf import _parse_raw_event_name
+from wca.testing import create_open_mock
 
 
 @pytest.mark.parametrize("raw_value,time_enabled,time_running,expected", [
@@ -127,8 +127,8 @@ def test_aggregate_measurements(measurements_per_cpu, event_names, expected):
     assert perf._aggregate_measurements(measurements_per_cpu, event_names) == expected
 
 
-@patch('owca.perf._get_cgroup_fd')
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf._get_cgroup_fd')
+@patch('wca.perf.PerfCounters._open')
 def test_perf_counters_init(_open_mock, _get_cgroup_fd_mock):
     prf = perf.PerfCounters('/mycgroup', [metrics.MetricName.CYCLES])
     assert prf._group_event_leader_files == {}
@@ -137,22 +137,22 @@ def test_perf_counters_init(_open_mock, _get_cgroup_fd_mock):
 
 
 @patch('builtins.open')
-@patch('owca.perf._parse_online_cpus_string', return_value=[0])
+@patch('wca.perf._parse_online_cpus_string', return_value=[0])
 def test_get_online_cpus(_parse_online_cpu_string_mock, open_mock):
     assert perf._get_online_cpus() == [0]
     open_mock.assert_called_with('/sys/devices/system/cpu/online', 'r')
 
 
-@patch('owca.perf._get_cgroup_fd')
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf._get_cgroup_fd')
+@patch('wca.perf.PerfCounters._open')
 def test_read_metrics(_open_mock, _get_cgroup_fd_mock):
     prf = perf.PerfCounters('/mycgroup', [metrics.MetricName.CYCLES])
     assert prf.get_measurements() == {metrics.MetricName.CYCLES: 0}
 
 
-@patch('owca.perf.LIBC.ioctl', return_value=1)
-@patch('owca.perf._get_cgroup_fd')
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf.LIBC.ioctl', return_value=1)
+@patch('wca.perf._get_cgroup_fd')
+@patch('wca.perf.PerfCounters._open')
 def test_reset_and_enable_group_event_leaders(_open_mock, _get_cgroup_fd_mock, ioctl_mock):
     prf = perf.PerfCounters('/mycgroup', [metrics.MetricName.CYCLES])
     # cpu0 group event leader mock
@@ -161,9 +161,9 @@ def test_reset_and_enable_group_event_leaders(_open_mock, _get_cgroup_fd_mock, i
     ioctl_mock.assert_has_calls([mock.ANY] * 2)
 
 
-@patch('owca.perf.LIBC.ioctl', return_value=-1)
-@patch('owca.perf._get_cgroup_fd')
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf.LIBC.ioctl', return_value=-1)
+@patch('wca.perf._get_cgroup_fd')
+@patch('wca.perf.PerfCounters._open')
 def test_reset_and_enable_group_event_leaders_reset_fail(
         _open_mock, _get_cgroup_fd_mock, ioctl_mock
 ):
@@ -174,9 +174,9 @@ def test_reset_and_enable_group_event_leaders_reset_fail(
         prf._reset_and_enable_group_event_leaders()
 
 
-@patch('owca.perf.LIBC.ioctl', side_effect=[1, -1])
-@patch('owca.perf._get_cgroup_fd')
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf.LIBC.ioctl', side_effect=[1, -1])
+@patch('wca.perf._get_cgroup_fd')
+@patch('wca.perf.PerfCounters._open')
 def test_reset_and_enable_group_event_leaders_enable_fail(
         _open_mock, _get_cgroup_fd_mock, ioctl_mock
 ):
@@ -188,8 +188,8 @@ def test_reset_and_enable_group_event_leaders_enable_fail(
 
 
 @patch('os.close')
-@patch('owca.perf._get_cgroup_fd', return_value=10)
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf._get_cgroup_fd', return_value=10)
+@patch('wca.perf.PerfCounters._open')
 def test_cleanup(_open_mock, _get_cgroup_fd_mock, os_close_mock):
     prf = perf.PerfCounters('/mycgroup', [metrics.MetricName.CYCLES])
     file_descriptor_mock = Mock()
@@ -203,8 +203,8 @@ def test_cleanup(_open_mock, _get_cgroup_fd_mock, os_close_mock):
                          + len(prf._group_event_leader_files)))
 
 
-@patch('owca.perf._get_cgroup_fd', return_value=10)
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf._get_cgroup_fd', return_value=10)
+@patch('wca.perf.PerfCounters._open')
 def test_open_for_cpu_wrong_arg(_open_mock, _get_cgroup_fd_mock):
     prf = perf.PerfCounters('/mycgroup', [])
     # let's check non-existent type of measurement
@@ -213,9 +213,9 @@ def test_open_for_cpu_wrong_arg(_open_mock, _get_cgroup_fd_mock):
 
 
 @patch('os.fdopen')
-@patch('owca.perf._perf_event_open', return_value=5)
-@patch('owca.perf._get_cgroup_fd', return_value=10)
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf._perf_event_open', return_value=5)
+@patch('wca.perf._get_cgroup_fd', return_value=10)
+@patch('wca.perf.PerfCounters._open')
 def test_open_for_cpu(_open_mock, _get_cgroup_fd_mock,
                       _perf_event_open_mock, fdopen_mock):
     prf = perf.PerfCounters('/mycgroup', [metrics.MetricName.CYCLES])
@@ -235,9 +235,9 @@ def test_open_for_cpu(_open_mock, _get_cgroup_fd_mock,
 
 @patch('os.fdopen', side_effect=[Mock(fileno=Mock(return_value=5)),
                                  Mock(fileno=Mock(return_value=6))])
-@patch('owca.perf._perf_event_open', return_value=5)
-@patch('owca.perf._get_cgroup_fd', return_value=10)
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf._perf_event_open', return_value=5)
+@patch('wca.perf._get_cgroup_fd', return_value=10)
+@patch('wca.perf.PerfCounters._open')
 def test_open_for_cpu_with_existing_event_group_leader(_open_mock,
                                                        _get_cgroup_fd_mock,
                                                        _perf_event_open_mock, fdopen_mock):
@@ -256,16 +256,16 @@ def test_open_for_cpu_with_existing_event_group_leader(_open_mock,
                                              flags=pc.PERF_FLAG_FD_CLOEXEC)
 
 
-@patch('owca.perf._get_cgroup_fd')
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf._get_cgroup_fd')
+@patch('wca.perf.PerfCounters._open')
 def test_read_events_zero_values_zero_cpus(_open_mock, _get_cgroup_fd_mock):
     prf = perf.PerfCounters('/mycgroup', [])
     prf._group_event_leaders = {}
     assert prf._read_events() == {}
 
 
-@patch('owca.perf._get_cgroup_fd')
-@patch('owca.perf.PerfCounters._open')
+@patch('wca.perf._get_cgroup_fd')
+@patch('wca.perf.PerfCounters._open')
 def test_read_events_zero_values_one_cpu(_open_mock, _get_cgroup_fd_mock):
     prf = perf.PerfCounters('/mycgroup', [])
     # File descriptor mock for single cpu
@@ -273,7 +273,7 @@ def test_read_events_zero_values_one_cpu(_open_mock, _get_cgroup_fd_mock):
     assert prf._read_events() == {}
 
 
-@patch('owca.perf.SetEffectiveRootUid')
+@patch('wca.perf.SetEffectiveRootUid')
 @patch('os.path.exists', Mock(return_value=True))
 @patch('builtins.open', new=create_open_mock({
     "/dev/cpu/0/cpuid": b"\x16\x00\x00\x00\x47\x65\x6e\x75\x6e\x74\x65\x6c\x69\x6e\x65\x49"
@@ -283,7 +283,7 @@ def test_read_skylake_cpu_model(*args):
     assert pc.CPUModel.SKYLAKE == perf._get_cpu_model()
 
 
-@patch('owca.perf.SetEffectiveRootUid')
+@patch('wca.perf.SetEffectiveRootUid')
 @patch('os.path.exists', Mock(return_value=True))
 @patch('builtins.open', new=create_open_mock({
     "/dev/cpu/0/cpuid": b"\x14\x00\x00\x00\x47\x65\x6e\x75\x6e\x74\x65\x6c\x69\x6e\x65\x49"
@@ -293,7 +293,7 @@ def test_read_broadwell_cpu_model(*args):
     assert pc.CPUModel.BROADWELL == perf._get_cpu_model()
 
 
-@patch('owca.perf.SetEffectiveRootUid')
+@patch('wca.perf.SetEffectiveRootUid')
 @patch('os.path.exists', Mock(return_value=True))
 @patch('builtins.open', new=create_open_mock({
     "/dev/cpu/0/cpuid": b"\x0b\x00\x00\x00\x47\x65\x6e\x75\x6e\x74\x65\x6c\x69\x6e\x65\x49"

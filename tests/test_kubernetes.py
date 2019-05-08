@@ -16,9 +16,9 @@ import pytest
 import json
 from unittest.mock import patch, Mock
 
-from owca.kubernetes import KubernetesNode, KubernetesTask, _calculate_pod_resources, \
+from wca.kubernetes import KubernetesNode, KubernetesTask, _calculate_pod_resources, \
     _build_cgroup_path, are_all_tasks_of_single_qos, QOS_LABELNAME
-from owca.testing import relative_module_path
+from wca.testing import relative_module_path
 
 
 def create_json_fixture_mock(name, status_code=200):

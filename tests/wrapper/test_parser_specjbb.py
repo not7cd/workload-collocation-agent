@@ -15,8 +15,8 @@
 
 import os
 
-from owca.metrics import Metric, MetricType
-from owca.wrapper.parser_specjbb import parse
+from wca.metrics import Metric, MetricType
+from wca.wrapper.parser_specjbb import parse
 
 
 def test_parse():

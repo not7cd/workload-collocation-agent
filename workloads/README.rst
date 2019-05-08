@@ -70,7 +70,7 @@ Note that:
 
 - most workload images require wrapper pex files (`Building wrappers`_),
 - workload images are build from **repository top-level** (to have access to wrapper pex files),
-- the convention is to prefix images names with string ``owca/``, e.g. ``owca/cassadra_stress``,
+- the convention is to prefix images names with string ``wca/``, e.g. ``wca/cassadra_stress``,
 - sub directorires here e.g. ``cassandra_stress`` match image names.
 
 To build image:
@@ -78,7 +78,7 @@ To build image:
 .. code-block:: sh
 
     # in repository top-level directory
-    docker build -f workloads/stress_ng/Dockerfile -t owca/stress_ng .
+    docker build -f workloads/stress_ng/Dockerfile -t wca/stress_ng .
 
 
 Running individual Aurora jobs
@@ -143,7 +143,7 @@ application_host_ip      for load generator jobs  An application host IP; used b
                                                   a load generator.
 own_ip                   yes                      Used to specify host were job will      100.65.174.12
                                                   be scheduled.
-image_name               yes                      docker image name                       owca/ycsb
+image_name               yes                      docker image name                       wca/ycsb
 image_tag                yes                      docker image tag
 slo                      no (empty)               SLA target (unit should match           80000
                                                   unit in which SLI metric is
@@ -156,7 +156,7 @@ disk                     no (1 GB)                How many GB of disc space shou
                                                   be allocated to the task
 wrapper_kafka_borker     for jobs using wrapper   Address of Kafka borker to store        100.65.174.12:5050
                                                   performance metrics.
-wrapper_kafka_topic      for jobs using wrapper   Name of the topic to store performance  owca_workloads_twemcache_rpc_perf
+wrapper_kafka_topic      for jobs using wrapper   Name of the topic to store performance  wca_workloads_twemcache_rpc_perf
                                                   metrics in Kafka.
 wrapper_log_level        no (DEBUG)               Log level for wrapper.                  WARNING
 ======================== ======================== ======================================= ================================================

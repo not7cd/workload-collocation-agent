@@ -5,7 +5,7 @@ SPECjbb2015 Java Business Benchmark
 
 Preparing to launch Standalone SPECjbb2015 Distributed Controller.
 
-Reading property file: /tmp/owca_config.raw
+Reading property file: /tmp/wca_config.raw
 
      0s: Enumerating plugins...
      0s:    Connectivity:

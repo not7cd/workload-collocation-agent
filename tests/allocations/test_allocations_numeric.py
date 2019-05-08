@@ -14,7 +14,7 @@
 
 import pytest
 
-from owca.allocations import BoxedNumeric, InvalidAllocations
+from wca.allocations import BoxedNumeric, InvalidAllocations
 
 
 ############################################################################

@@ -23,9 +23,9 @@ install_requires = ['%s%s' % (name, spec['version'])
 print(install_requires)
 
 setup(
-    name='owca',
+    name='wca',
     author='Intel',
-    description='Orchestration-aware Workload Collocation Agent',
+    description='Workload Collocation Agent',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',

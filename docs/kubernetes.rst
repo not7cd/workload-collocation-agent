@@ -18,9 +18,9 @@ Kubernetes restrictions
 - Kubernetes version >= 1.13.x,
 - cgroup driver: `systemd` or `cgroupfs`.
 
-Possible OWCA configuration options
+Possible wca configuration options
 ===================================
-In OWCA configuration file one can set below listed parameters.
+In wca configuration file one can set below listed parameters.
 Please refer to `example configuration file for kubernetes <../configs/kubernetes/kubernetes_example_allocator.yaml>`_.
 
 .. code-block:: python

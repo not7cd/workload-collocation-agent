@@ -16,7 +16,7 @@ import pytest
 import requests
 from unittest.mock import MagicMock, patch
 
-from owca.databases import EtcdDatabase
+from wca.databases import EtcdDatabase
 
 
 @patch('requests.post')

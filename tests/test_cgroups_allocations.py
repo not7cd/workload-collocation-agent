@@ -14,16 +14,18 @@
 
 from unittest.mock import patch, call
 
-from owca.allocators import AllocationConfiguration
-from owca.cgroups_allocations import QuotaAllocationValue, SharesAllocationValue
-from owca.containers import Container
-from owca.testing import allocation_metric
+from wca.allocators import AllocationConfiguration
+from wca.cgroups_allocations import QuotaAllocationValue, SharesAllocationValue
+from wca.containers import Container
+from wca.platforms import RDTInformation
+from wca.testing import allocation_metric
 
 
-@patch('owca.perf.PerfCounters')
-@patch('owca.cgroups.Cgroup')
+@patch('wca.perf.PerfCounters')
+@patch('wca.cgroups.Cgroup')
 def test_cgroup_allocations(Cgroup_mock, PerfCounters_mock):
-    foo_container = Container('/somepath', platform_cpus=1)
+    rdt_information = RDTInformation(True, True, True, True, '0', '0', 0, 0, 0)
+    foo_container = Container('/somepath', platform_cpus=1, rdt_information=rdt_information)
     foo_container._cgroup.allocation_configuration = AllocationConfiguration()
 
     quota_allocation_value = QuotaAllocationValue(0.2, foo_container, dict(foo='bar'))

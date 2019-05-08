@@ -44,7 +44,7 @@ Mesos agent was configured with non-default options:
 
 Possible configuration options
 ==============================
-In OWCA configuration file one can set below listed parameters.
+In WCA configuration file one can set below listed parameters.
 Please refer to `example configuration file for mesos <../configs/mesos/mesos_external_detector.yaml>`_.
 
 .. code-block:: python

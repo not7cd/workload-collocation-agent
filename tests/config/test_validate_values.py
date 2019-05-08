@@ -17,7 +17,7 @@ import inspect
 
 import pytest
 
-from owca.config import _assure_type, ValidationError, WeakValidationError, \
+from wca.config import _assure_type, ValidationError, WeakValidationError, \
     Url, Path, Numeric, Str, IpPort
 
 

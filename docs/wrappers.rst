@@ -76,12 +76,12 @@ Wrapping ``stress-ng`` based workload example
         --stderr 1 --log_level DEBUG --separator ".*dispatching hogs.*" \
         --regexp '(?P<name>cpu)[\ ]+(?P<value>\d+)' \
         --subprocess_shell --metric_name_prefix=stress_ng_bogo_ops_\
-        --kafka_brokers 127.0.0.1:9092 --kafka_topic owca_stress_ng
+        --kafka_brokers 127.0.0.1:9092 --kafka_topic wca_stress_ng
 
 
-#. Verify that messages are available in ``owca_stress_ng`` topic::
+#. Verify that messages are available in ``wca_stress_ng`` topic::
 
-    /opt/kafka/kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092 --topic owca_stress_ng --from-beginning
+    /opt/kafka/kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092 --topic wca_stress_ng --from-beginning
 
 
 Command line wrapper options
@@ -150,8 +150,8 @@ Implementing workload specific parsing function
 
 Parsing function implementation must return metrics only once. Already returned values must be discarded.
 
-See default 'parse function <owca/wrapper/default_parse.py`_ as an example.
-Application specific parser functions can be found at in ```owca/wrapper/`` directory <owca/wrapper/>`_.
+See default 'parse function <wca/wrapper/default_parse.py`_ as an example.
+Application specific parser functions can be found at in ```wca/wrapper/`` directory <wca/wrapper/>`_.
 
 To handle child process exit ``readline_with_check(input)`` function should be used.
 The function raises ``StopIteration`` exception when EOF is found.
@@ -159,7 +159,7 @@ The function raises ``StopIteration`` exception when EOF is found.
 .. code-block:: python
 
     #import
-    from owca.wrapper.parser import readline_with_check
+    from wca.wrapper.parser import readline_with_check
 
     # Read a line using readline_with_check(input)
     new_line = readline_with_check(input)

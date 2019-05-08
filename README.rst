@@ -1,9 +1,9 @@
 =====================================================
-OWCA - Orchestration-Aware Workload Collocation Agent
+WCA - Workload Collocation Agent
 =====================================================
 
-.. image:: https://travis-ci.com/intel/owca.svg?branch=master
-    :target: https://travis-ci.com/intel/owca
+.. image:: https://travis-ci.com/intel/wca.svg?branch=master
+    :target: https://travis-ci.com/intel/workload-collocation-agent
 
 .. contents:: Table of Contents
 
@@ -12,7 +12,7 @@ OWCA - Orchestration-Aware Workload Collocation Agent
 Introduction
 ============
 
-Orchestration-aware Workload Collocation Agent goal is to reduce interference between collocated tasks and increase tasks density while ensuring the quality of
+Workload Collocation Agent goal is to reduce interference between collocated tasks and increase tasks density while ensuring the quality of
 service for high priority tasks. Chosen approach is to enable real-time resource isolation management
 to ensure that high priority jobs meet their Service Level Objective (SLO) and best-effort jobs
 effectively utilize as many idle resources as possible.
@@ -24,17 +24,17 @@ Resource usage can be increased by:
 
 .. image:: docs/overview.png
 
-OWCA abstracts compute node, workloads, monitoring and resource allocation.
-An externally provided algorithm is responsible for allocating resources or anomaly detection logic. OWCA
+WCA abstracts compute node, workloads, monitoring and resource allocation.
+An externally provided algorithm is responsible for allocating resources or anomaly detection logic. WCA
 and the algorithm exchange information about current resource usage, isolation actuations or detected
-anomalies. OWCA stores information about detected anomalies, resource allocation and platform utilization metrics to a remote storage such as Kafka.
+anomalies. WCA stores information about detected anomalies, resource allocation and platform utilization metrics to a remote storage such as Kafka.
 
-The diagram below puts OWCA in context of an example Mesos cluster and monitoring infrastructure:
+The diagram below puts WCA in context of an example Mesos cluster and monitoring infrastructure:
 
 .. image:: docs/context.png
 
 
-See `OWCA Architecture 1.5.pdf`_ for further details.
+See `WCA Architecture 1.5.pdf`_ for further details.
 
 
 Getting started
@@ -42,7 +42,7 @@ Getting started
 
 ------------
 
-OWCA is targeted at and tested on Centos 7.5.
+WCA is targeted at and tested on Centos 7.5.
 
 *Note*: for full production installation please follow this detailed `installation guide <docs/install.rst>`_.
 
@@ -55,18 +55,18 @@ OWCA is targeted at and tested on Centos 7.5.
     python3.6 -m pip install --user pipenv
 
     # Clone the repository & build.
-    git clone https://github.com/intel/owca
-    cd owca
+    git clone https://github.com/intel/workload-collocation-agent
+    cd workload-collocation-agent
     make venv
 
     # Prepare tasks manually (only cgroups are required)
     sudo mkdir /sys/fs/cgroups/{cpu,cpuacct,perf_event}/task1
 
     # Example of running agent in measurments-only mode with predefined static list of tasks
-    sudo dist/owca.pex --config configs/extra/static_measurements.yaml --root
+    sudo dist/wca.pex --config configs/extra/static_measurements.yaml --root
 
     # Example of static allocation with predefined rules on predefined list of tasks.
-    sudo dist/owca.pex --config configs/extra/static_allocator.yaml --root
+    sudo dist/wca.pex --config configs/extra/static_allocator.yaml --root
 
 
 Running those commands outputs metrics in Prometheus format to standard error like this:
@@ -75,30 +75,30 @@ Running those commands outputs metrics in Prometheus format to standard error li
 
     # HELP cache_misses Linux Perf counter for cache-misses per container.
     # TYPE cache_misses counter
-    cache_misses{cores="4",cpus="8",host="gklab-126-081",owca_version="0.1.dev655+g586f259.d20190401",sockets="1",task_id="task1"} 0.0 1554139418146
+    cache_misses{cores="4",cpus="8",host="gklab-126-081",wca_version="0.1.dev655+g586f259.d20190401",sockets="1",task_id="task1"} 0.0 1554139418146
 
     # HELP cpu_usage_per_cpu [1/USER_HZ] Logical CPU usage in 1/USER_HZ (usually 10ms).Calculated using values based on /proc/stat
     # TYPE cpu_usage_per_cpu counter
-    cpu_usage_per_cpu{cores="4",cpu="0",cpus="8",host="gklab-126-081",owca_version="0.1.dev655+g586f259.d20190401",sockets="1"} 5103734 1554139418146
-    cpu_usage_per_cpu{cores="4",cpu="1",cpus="8",host="gklab-126-081",owca_version="0.1.dev655+g586f259.d20190401",sockets="1"} 6860714 1554139418146
+    cpu_usage_per_cpu{cores="4",cpu="0",cpus="8",host="gklab-126-081",wca_version="0.1.dev655+g586f259.d20190401",sockets="1"} 5103734 1554139418146
+    cpu_usage_per_cpu{cores="4",cpu="1",cpus="8",host="gklab-126-081",wca_version="0.1.dev655+g586f259.d20190401",sockets="1"} 6860714 1554139418146
 
     # HELP cpu_usage_per_task [ns] cpuacct.usage (total kernel and user space)
     # TYPE cpu_usage_per_task counter
-    cpu_usage_per_task{cores="4",cpus="8",host="gklab-126-081",owca_version="0.1.dev655+g586f259.d20190401",sockets="1",task_id="task1"} 0 1554139418146
+    cpu_usage_per_task{cores="4",cpus="8",host="gklab-126-081",wca_version="0.1.dev655+g586f259.d20190401",sockets="1",task_id="task1"} 0 1554139418146
 
     # HELP instructions Linux Perf counter for instructions per container.
     # TYPE instructions counter
-    instructions{cores="4",cpus="8",host="gklab-126-081",owca_version="0.1.dev655+g586f259.d20190401",sockets="1",task_id="task1"} 0.0 1554139418146
+    instructions{cores="4",cpus="8",host="gklab-126-081",wca_version="0.1.dev655+g586f259.d20190401",sockets="1",task_id="task1"} 0.0 1554139418146
 
     # HELP memory_usage [bytes] Total memory used by platform in bytes based on /proc/meminfo and uses heuristic based on linux free tool (total - free - buffers - cache).
     # TYPE memory_usage gauge
-    memory_usage{cores="4",cpus="8",host="gklab-126-081",owca_version="0.1.dev655+g586f259.d20190401",sockets="1"} 6407118848 1554139418146
+    memory_usage{cores="4",cpus="8",host="gklab-126-081",wca_version="0.1.dev655+g586f259.d20190401",sockets="1"} 6407118848 1554139418146
 
-    # TYPE owca_tasks gauge
-    owca_tasks{cores="4",cpus="8",host="gklab-126-081",owca_version="0.1.dev655+g586f259.d20190401",sockets="1"} 1 1554139418146
+    # TYPE wca_tasks gauge
+    wca_tasks{cores="4",cpus="8",host="gklab-126-081",wca_version="0.1.dev655+g586f259.d20190401",sockets="1"} 1 1554139418146
 
-    # TYPE owca_up counter
-    owca_up{cores="4",cpus="8",host="gklab-126-081",owca_version="0.1.dev655+g586f259.d20190401",sockets="1"} 1554139418.146581 1554139418146
+    # TYPE wca_up counter
+    wca_up{cores="4",cpus="8",host="gklab-126-081",wca_version="0.1.dev655+g586f259.d20190401",sockets="1"} 1554139418.146581 1554139418146
 
 
 If reconfigured to use other built-in components you can easily:
@@ -111,9 +111,9 @@ If reconfigured to use other built-in components you can easily:
 Configuration
 =============
 
-OWCA introduces simple but extensible mechanism to inject dependencies into classes and build complete software stack of components. 
-OWCA main control loop is based on ``Runner`` base class that implements
-single ``run`` blocking method. Depending on ``Runner`` class used, the OWCA is run in different execution mode (e.g. detection,
+WCA introduces simple but extensible mechanism to inject dependencies into classes and build complete software stack of components.
+WCA main control loop is based on ``Runner`` base class that implements
+single ``run`` blocking method. Depending on ``Runner`` class used, the WCA is run in different execution mode (e.g. detection,
 allocation).
 
 Refer to full of list of `Components`_ for further reference.
@@ -127,7 +127,7 @@ Available runners:
   regular and configurable intervals. See `allocation API <docs/allocation.rst>`_ for details.
 
 Conceptually ``Runner`` reads a state of the system (both metrics and workloads),
-passes the information to external component (an algorithm), logs the algorithm input and output using implementation of  `Storage <owca/storage.py>`_
+passes the information to external component (an algorithm), logs the algorithm input and output using implementation of  `Storage <wca/storage.py>`_
 and allocates resources if instructed.
 
 Following snippet is an example configuration of a runner:
@@ -139,7 +139,7 @@ Following snippet is an example configuration of a runner:
         callback_component: !ClassImplementingCallback
         storage: !SomeStorage
 
-After starting OWCA with the above mentioned configuration, an instance of the class ``SomeRunner`` will be created. The instance's properties will be set to:
+After starting WCA with the above mentioned configuration, an instance of the class ``SomeRunner`` will be created. The instance's properties will be set to:
 
 - ``node`` - to an instance of ``SomeNode``
 - ``callback_component`` - to an instance of ``ClassImplementingCallback``
@@ -149,7 +149,7 @@ Configuration mechanism allows to:
 
 - Create and configure complex python objects (e.g. ``DetectionRunner``, ``MesosNode``, ``KafkaStorage``) using `YAML tags`_.
 - Inject dependencies (with type checking support) into constructed objects using `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ annotations.
-- Register external classes using ``-r`` command line argument or by using ``owca.config.register`` decorator API.
+- Register external classes using ``-r`` command line argument or by using ``wca.config.register`` decorator API.
 
 .. _`YAML tags`: http://yaml.org/spec/1.2/spec.html#id2764295
 
@@ -160,19 +160,19 @@ Components
 
 Following built-in components are available (stable API):
 
-- `MesosNode <owca/mesos.py#L64>`_ provides workload discovery on Mesos cluster node where `mesos containerizer <http://mesos.apache.org/documentation/latest/mesos-containerizer/>`_ is used (see the docs `here <docs/mesos.rst>`_)
-- `MeasurementRunner <owca/runners/measurement.py#L36>`_ implements simple loop that reads state of the system, encodes this information as metrics and stores them,
-- `DetectionRunner <owca/runners/detection.py#L52>`_ extends ``MeasurementRunner`` and additionally implements anomaly detection callback and encodes anomalies as metrics to enable alerting and analysis. See `Detection API <docs/detection.rst>`_ for more details.
-- `AllocationRunner <owca/runners/allocation.py#L127>`_ extends ``MeasurementRunner`` and additionally implements resource allocation callback. See `Allocation API <docs/allocation.rst>`_ for more details .
-- `NOPAnomalyDetector <owca/detectors.py#L164>`_ dummy "no operation" detector that returns no metrics, nor anomalies. See `Detection API <docs/detection.rst>`_ for more details.
-- `NOPAllocator <owca/allocators.py#L95>`_ dummy "no operation" detector that returns no metrics, nor anomalies. See `Detection API <docs/detection.rst>`_ for more details.
-- `KafkaStorage <owca/storage.py#L213>`_ logs metrics to  `Kafka streaming platform <https://kafka.apache.org/>`_ using configurable topics 
-- `LogStorage <owca/storage.py#L46>`_ logs metrics to standard error or to a file at configurable location.
+- `MesosNode <wca/mesos.py#L64>`_ provides workload discovery on Mesos cluster node where `mesos containerizer <http://mesos.apache.org/documentation/latest/mesos-containerizer/>`_ is used (see the docs `here <docs/mesos.rst>`_)
+- `MeasurementRunner <wca/runners/measurement.py#L36>`_ implements simple loop that reads state of the system, encodes this information as metrics and stores them,
+- `DetectionRunner <wca/runners/detection.py#L52>`_ extends ``MeasurementRunner`` and additionally implements anomaly detection callback and encodes anomalies as metrics to enable alerting and analysis. See `Detection API <docs/detection.rst>`_ for more details.
+- `AllocationRunner <wca/runners/allocation.py#L127>`_ extends ``MeasurementRunner`` and additionally implements resource allocation callback. See `Allocation API <docs/allocation.rst>`_ for more details .
+- `NOPAnomalyDetector <wca/detectors.py#L164>`_ dummy "no operation" detector that returns no metrics, nor anomalies. See `Detection API <docs/detection.rst>`_ for more details.
+- `NOPAllocator <wca/allocators.py#L95>`_ dummy "no operation" detector that returns no metrics, nor anomalies. See `Detection API <docs/detection.rst>`_ for more details.
+- `KafkaStorage <wca/storage.py#L213>`_ logs metrics to  `Kafka streaming platform <https://kafka.apache.org/>`_ using configurable topics
+- `LogStorage <wca/storage.py#L46>`_ logs metrics to standard error or to a file at configurable location.
 
 Following built-in components are available as provisional API:
 
-- `StaticNode <owca/extra/static_node.py>`_ to support static list of tasks (does not require full orchestration software stack),
-- `StaticAllocator <owca/extra/static_allocator.py>`_ to support simple rules based logic for resource allocation.
+- `StaticNode <wca/extra/static_node.py>`_ to support static list of tasks (does not require full orchestration software stack),
+- `StaticAllocator <wca/extra/static_allocator.py>`_ to support simple rules based logic for resource allocation.
 
 Third-party components:
 
@@ -205,7 +205,7 @@ Further reading
 - `Kubernetes integration <docs/kubernetes.rst>`_
 - `Logging configuration <docs/logging.rst>`_
 - `Supported workloads and definitions </workloads>`_
-- `OWCA Architecture 1.5.pdf`_
+- `WCA Architecture 1.5.pdf`_
 
-.. _`OWCA Architecture 1.5.pdf`: docs/OWCA_Architecture_v1.5.pdf
+.. _`WCA Architecture 1.5.pdf`: docs/WCA_Architecture_v1.5.pdf
 

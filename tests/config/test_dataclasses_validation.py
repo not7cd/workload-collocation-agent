@@ -17,9 +17,9 @@ from typing import List, Dict
 import pytest
 from dataclasses import dataclass
 
-from owca import config
-from owca import testing
-from owca.config import ConfigLoadError
+from wca import config
+from wca import testing
+from wca.config import ConfigLoadError
 
 log = logging.getLogger(__name__)
 

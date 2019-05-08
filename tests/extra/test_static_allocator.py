@@ -15,13 +15,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from owca.allocators import RDTAllocation
-from owca.extra.static_allocator import StaticAllocator, _build_allocations_from_rules
+from wca.allocators import RDTAllocation
+from wca.extra.static_allocator import StaticAllocator, _build_allocations_from_rules
 
 
 @patch('os.path.exists', Mock(return_value=True))
-@patch('owca.extra.static_allocator.load_config', return_value=[])
-@patch('owca.extra.static_allocator._build_allocations_from_rules', return_value={})
+@patch('wca.extra.static_allocator.load_config', return_value=[])
+@patch('wca.extra.static_allocator._build_allocations_from_rules', return_value={})
 def test_static_allocator(allocate_according_rules_mock, load_config_mock):
     static_allocator = StaticAllocator(
         config='somefile', rules=[{'allocations': {'cpu_quota': 0.5}}])

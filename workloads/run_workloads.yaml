@@ -31,10 +31,10 @@
     # Note: search for resources in workload[job_id]['resources'], otherwise use default value.
     resources: "{{workload_version[job_id].resources if (workload_version[job_id].resources is defined) else default_resources}}"
 
-    # By default image_name is {{docker_registry}}/owca/{{job_id}}
+    # By default image_name is {{docker_registry}}/wca/{{job_id}}
     #   However, the image_name can be ovewritten on job level.
     #   The same with image_tag
-    image_prefix: "owca"
+    image_prefix: "wca"
     image_subname: "{{job_id}}"
     # Note: prefixing name with underscore as otherwise we would have infinite recursion.
     image_tag_: "{{workload_version[job_id].image_tag
@@ -58,7 +58,7 @@
     load_generator_host_ip: "{{load_generator_host_ip}}"
     own_ip: "{{own_ip}}"
     wrapper_kafka_brokers: "{{wrapper_kafka_brokers}}"
-    wrapper_kafka_topic: "owca_workloads_{{workload_name}}"
+    wrapper_kafka_topic: "wca_workloads_{{workload_name}}"
     env_uniq_id: "{{env_uniq_id}}"
     image_name: "{{image_name}}"
     image_tag: "{{image_tag_}}"

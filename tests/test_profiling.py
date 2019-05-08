@@ -13,8 +13,8 @@
 # limitations under the License.
 from unittest.mock import patch
 
-from owca import profiling
-from owca.testing import assert_metric
+from wca import profiling
+from wca.testing import assert_metric
 
 
 def test_profiler():
@@ -46,12 +46,12 @@ def test_profiler():
 
     metrics = profiler.get_metrics()
 
-    assert_metric(metrics, 'owca_duration_seconds', {'function': 'new_name'},
+    assert_metric(metrics, 'wca_duration_seconds', {'function': 'new_name'},
                   expected_metric_value=2.)
-    assert_metric(metrics, 'owca_duration_seconds_avg', {'function': 'new_name'},
+    assert_metric(metrics, 'wca_duration_seconds_avg', {'function': 'new_name'},
                   expected_metric_value=2.)
 
-    assert_metric(metrics, 'owca_duration_seconds', {'function': 'other_function'},
+    assert_metric(metrics, 'wca_duration_seconds', {'function': 'other_function'},
                   expected_metric_value=3.)
-    assert_metric(metrics, 'owca_duration_seconds_avg', {'function': 'other_function'},
+    assert_metric(metrics, 'wca_duration_seconds_avg', {'function': 'other_function'},
                   expected_metric_value=2.)
