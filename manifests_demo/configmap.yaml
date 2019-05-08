@@ -2,7 +2,7 @@ kind: ConfigMap
 apiVersion: v1 
 metadata:
     name: owca-config
-
+    namespace: wca
 data:
   owca_config.yml: |
 

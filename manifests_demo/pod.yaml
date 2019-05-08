@@ -2,9 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: owca
-  labels:
-    app: myapp
-    task_kind: best-effort
+  namespace: wca
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "9100"

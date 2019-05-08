@@ -3,54 +3,60 @@ from owca.allocators import Allocator, RDTAllocation, Metric
 import logging
 log = logging.getLogger(__name__)
 
-THROTTLE = {
-    'cpu_quota': 0.,
-    'rdt': RDTAllocation(
+
+# Predefined resources configuration.
+THROTTLE = dict(
+    cpu_quota=0.1,
+    rdt=RDTAllocation(
         name='best-effort',
         l3='L3:0=002;1=002',
         mb='MB:0=10;1=10'
     )
-}
+)
 
-ENABLE = {
-    'cpu_quota': 1.,
-    'rdt': RDTAllocation(
+ENABLE = dict(
+    cpu_quota=1.,
+    rdt=RDTAllocation(
         name='best-effort',
         l3='L3:0=ff;1=ff',
         mb='MB:0=100;1=100'
     )
-}
+)
 
 
 @dataclass
 class ExampleAllocator(Allocator):
+    """Simple allocator that watches over IPC (instruction per cycles) of latency-critical tasks,
+    and reacts by throttling best-effort tasks. """
 
-    preasure_threshold: float = 1.
-
-    def __post_init__(self):
-        log.info('Example allocator with preasure_threshold: %r', self.preasure_threshold)
+    threashold: float = 1.
 
     def allocate(self, platform, measurements, resources, labels, allocations):
 
-        # Calculate preasure ...
-        total_preasure = 0.
-        for task in measurements:
-            if labels[task].get('task_kind') == 'latency-critical':
-                ipc = measurements[task].get('ipc', 1.0)
-                log.debug('found latency critical task with ipc: %r',  ipc)
-                if ipc < 1.:
-                    total_preasure += 1/measurements[task]['ipc']
-        metrics = [
-            Metric(name='total_preasure', value=total_preasure)
-        ]
+        be_tasks = [t for t in labels if labels[t].get('task_kind') == 'best-effort']
+        lc_tasks = [t for t in labels if labels[t].get('task_kind') == 'latency-critical']
+
+        log.debug('Found %s latency-critical tasks and %s best-efforts tasks',
+                  len(lc_tasks), len(lc_tasks))
+
+        # Calculate IPC preasure ...
+        preasure = 0.
+        for task in lc_tasks:
+            ipc = measurements[task].get('ipc', 1.0)
+            if ipc < 1.:
+                preasure += 1/measurements[task]['ipc']
 
         new_allocations = {}
         # Thortlle or enable best-efforts tasks based on preasure.
-        for task in measurements:
-            if labels[task].get('task_kind') == 'best-effort':
-                if total_preasure > self.preasure_threshold:
-                    new_allocations[task] = THROTTLE
-                else:
-                    new_allocations[task] = ENABLE
+        if be_tasks:
+            if preasure > self.threashold:
+                allocation = THROTTLE
+                log.info('Preasure=%r -> thorttle %s best-effort tasks', preasure, len(be_tasks))
+            else:
+                allocation = ENABLE
+                log.info('Preasure=%r -> enable %s best-effort tasks', preasure, len(be_tasks))
+            new_allocations = {t: allocation for t in be_tasks}
+        else:
+            new_allocations = {}
 
-        return new_allocations, [], metrics
+        return new_allocations, [], [Metric(name='total_preasure', value=preasure)]
