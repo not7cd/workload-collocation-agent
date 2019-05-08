@@ -27,5 +27,5 @@ runner: !AllocationRunner
   allocator: !StaticAllocator
     config: "$PATH/static_alloc_config.yaml"
   allocations_storage: !KafkaStorage
-    topic: owca_allocations
+    topic: wca_allocations
     max_timeout_in_seconds: 5.

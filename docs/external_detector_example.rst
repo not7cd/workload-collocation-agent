@@ -16,9 +16,9 @@ Assuming that external implementation of detector is provided as
 
     #example/external_package.py
 
-    from owca import detectors
-    from owca import mesos
-    from owca import metrics
+    from wca import detectors
+    from wca import mesos
+    from wca import metrics
 
 
     class ExampleDetector(detectors.AnomalyDetector):
@@ -66,20 +66,20 @@ when configuration file `mesos_external_detector.yaml <example/mesos_external_de
         task_id: 'some_task_id'
 
 
-you can run OWCA in following way:
+you can run WCA in following way:
 
 .. code:: shell-session
 
-    dist/owca.pex -c configs/mesos_external_detector.yaml -r example.external_package:ExampleDetector -l debug
+    dist/wca.pex -c configs/mesos_external_detector.yaml -r example.external_package:ExampleDetector -l debug
 
 you will see similar output:
 
 .. code:: shell-session
 
-    2018-07-13 14:51:32,829 DEBUG    {MainThread} [owca.logger] level=DEBUG
-    2018-07-13 14:51:32,829 DEBUG    {MainThread} [owca.main] started PID=30048
-    2018-07-13 14:51:32,913 DEBUG    {MainThread} [owca.storage] [Metric(name='platform_dummy', value=1, labels={}, type=None, help=None)]
-    2018-07-13 14:51:32,913 DEBUG    {MainThread} [owca.storage] [Metric(name='anomaly', value=1, labels={'task_id': 'task_id', 'resource': <ContendedResource.CPUS: 'cpus'>, 'uuid': <bound method ContentionAnomaly.uuid of ContentionAnomaly(task_ids=['task_id'], resource=<ContendedResource.CPUS: 'cpus'>)>}, type=<MetricType.COUNTER: 'counter'>, help=None), Metric(name='some_debug', value=2, labels={'version': 2}, type=None, help=None)]
+    2018-07-13 14:51:32,829 DEBUG    {MainThread} [wca.logger] level=DEBUG
+    2018-07-13 14:51:32,829 DEBUG    {MainThread} [wca.main] started PID=30048
+    2018-07-13 14:51:32,913 DEBUG    {MainThread} [wca.storage] [Metric(name='platform_dummy', value=1, labels={}, type=None, help=None)]
+    2018-07-13 14:51:32,913 DEBUG    {MainThread} [wca.storage] [Metric(name='anomaly', value=1, labels={'task_id': 'task_id', 'resource': <ContendedResource.CPUS: 'cpus'>, 'uuid': <bound method ContentionAnomaly.uuid of ContentionAnomaly(task_ids=['task_id'], resource=<ContendedResource.CPUS: 'cpus'>)>}, type=<MetricType.COUNTER: 'counter'>, help=None), Metric(name='some_debug', value=2, labels={'version': 2}, type=None, help=None)]
 
 Register API (optionally)
 -------------------------
@@ -92,16 +92,16 @@ Instead of providing a class as command line argument you can register it using 
     #example_package/example_module.py
 
     ...
-    from owca import config
+    from wca import config
 
     @config.register
     class ExampleDetector(detectors.AnomalyDetector):
         ...
 
 
-then you can run OWCA just providing configuration file:
+then you can run WCA just providing configuration file:
 
 
 .. code:: shell-session
 
-    dist/owca.pex -c example.yaml -l debug
+    dist/wca.pex -c example.yaml -l debug

@@ -15,11 +15,11 @@
 
 from unittest.mock import patch, Mock, call
 
-from owca.metrics import Metric
-from owca.storage import LogStorage
+from wca.metrics import Metric
+from wca.storage import LogStorage
 
 
-@patch('owca.storage.get_current_time', return_value=1)
+@patch('wca.storage.get_current_time', return_value=1)
 def test_log_storage(*mocks):
     open_mock = Mock()
     with patch('builtins.open', open_mock):
@@ -30,7 +30,7 @@ def test_log_storage(*mocks):
     assert open_mock.return_value.method_calls[0] == call.write('foo 8 1\n\n')
 
 
-@patch('owca.storage.get_current_time', return_value=1)
+@patch('wca.storage.get_current_time', return_value=1)
 @patch('os.rename')
 @patch('tempfile.NamedTemporaryFile')
 def test_log_storage_overwrite_mode(tempfile_mock, rename_mock, get_current_time_mock):

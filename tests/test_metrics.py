@@ -15,8 +15,8 @@
 
 import pytest
 
-from owca.mesos import create_metrics, sanitize_mesos_label
-from owca.metrics import Metric, merge_measurements
+from wca.mesos import create_metrics, sanitize_mesos_label
+from wca.metrics import Metric, merge_measurements
 
 
 @pytest.mark.parametrize('label_key,expected_label_key', (

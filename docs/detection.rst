@@ -82,7 +82,7 @@ using command line like this:
 
 .. code:: bash
 
-     owca --config some_mesos_config.yaml --component external_package.external_module:ContentionAnomalyDetector --level debug
+     wca --config some_mesos_config.yaml --component external_package.external_module:ContentionAnomalyDetector --level debug
 
 After that you can instantiate this class using configuration file.
 

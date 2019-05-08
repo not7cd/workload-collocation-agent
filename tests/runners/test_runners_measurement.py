@@ -16,12 +16,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from owca import storage
-from owca.containers import Container
-from owca.mesos import MesosNode
-from owca.runners.measurement import MeasurementRunner, _build_tasks_metrics, _prepare_tasks_data
-from owca.testing import assert_metric, redis_task_with_default_labels, prepare_runner_patches, \
-    TASK_CPU_USAGE, OWCA_MEMORY_USAGE, metric, DEFAULT_METRIC_VALUE, task
+from wca import storage
+from wca.containers import Container
+from wca.mesos import MesosNode
+from wca.platforms import RDTInformation
+from wca.runners.measurement import MeasurementRunner, _build_tasks_metrics, _prepare_tasks_data
+from wca.testing import assert_metric, redis_task_with_default_labels, prepare_runner_patches, \
+    TASK_CPU_USAGE, WCA_MEMORY_USAGE, metric, DEFAULT_METRIC_VALUE, task
 
 
 @prepare_runner_patches
@@ -46,13 +47,13 @@ def test_measurements_runner(subcgroups):
     # Check output metrics.
     got_metrics = runner._metrics_storage.store.call_args[0][0]
 
-    # Internal owca metrics are generated (owca is running, number of task under control,
+    # Internal wca metrics are generated (wca is running, number of task under control,
     # memory usage and profiling information)
-    assert_metric(got_metrics, 'owca_up', dict(extra_label='extra_value'))
-    assert_metric(got_metrics, 'owca_tasks', expected_metric_value=2)
-    # owca & its children memory usage (in bytes)
-    assert_metric(got_metrics, 'owca_memory_usage_bytes',
-                  expected_metric_value=OWCA_MEMORY_USAGE * 2 * 1024)
+    assert_metric(got_metrics, 'wca_up', dict(extra_label='extra_value'))
+    assert_metric(got_metrics, 'wca_tasks', expected_metric_value=2)
+    # wca & its children memory usage (in bytes)
+    assert_metric(got_metrics, 'wca_memory_usage_bytes',
+                  expected_metric_value=WCA_MEMORY_USAGE * 2 * 1024)
 
     # Measurements metrics about tasks, based on get_measurements mocks.
     cpu_usage = TASK_CPU_USAGE * (len(subcgroups) if subcgroups else 1)
@@ -72,13 +73,14 @@ def test_build_tasks_metrics(tasks_labels, tasks_measurements, expected_metrics)
     assert expected_metrics == _build_tasks_metrics(tasks_labels, tasks_measurements)
 
 
-@patch('owca.cgroups.Cgroup')
-@patch('owca.perf.PerfCounters')
-@patch('owca.containers.Container.get_measurements', Mock(return_value={'cpu_usage': 13}))
+@patch('wca.cgroups.Cgroup')
+@patch('wca.perf.PerfCounters')
+@patch('wca.containers.Container.get_measurements', Mock(return_value={'cpu_usage': 13}))
 def test_prepare_tasks_data(*mocks):
+    rdt_information = RDTInformation(True, True, True, True, '0', '0', 0, 0, 0)
     containers = {
         task('/t1', labels={'label_key': 'label_value'}, resources={'cpu': 3}):
-            Container('/t1', 1)
+            Container('/t1', 1, rdt_information)
     }
 
     tasks_measurements, tasks_resources, tasks_labels = _prepare_tasks_data(containers)

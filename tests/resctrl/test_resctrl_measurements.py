@@ -16,16 +16,16 @@
 import errno
 from unittest.mock import patch, mock_open, call, Mock, MagicMock
 
-from owca.resctrl import ResGroup
-from owca.resctrl import RESCTRL_ROOT_NAME
-from owca.testing import create_open_mock
+from wca.resctrl import ResGroup
+from wca.resctrl import RESCTRL_ROOT_NAME
+from wca.testing import create_open_mock
 
 import pytest
 
 
 @patch('os.path.isdir', return_value=True)
 @patch('os.rmdir')
-@patch('owca.resctrl.SetEffectiveRootUid')
+@patch('wca.resctrl.SetEffectiveRootUid')
 @patch('os.listdir', side_effects=lambda path: {
     '/sys/fs/resctrl/best_efforts/mon_groups/some_container': [],
 })
@@ -34,13 +34,13 @@ def test_resgroup_remove(listdir_mock, set_effective_root_uid_mock, rmdir_mock, 
         "/sys/fs/resctrl": "0",
         "/sys/fs/resctrl/best_efforts/mon_groups/some_container/tasks": "123\n124\n",
     })
-    with patch('owca.resctrl.open', open_mock):
+    with patch('wca.resctrl.open', open_mock):
         resgroup = ResGroup("best_efforts")
         resgroup.remove('some-container')
         rmdir_mock.assert_called_once_with('/sys/fs/resctrl/best_efforts/mon_groups/some-container')
 
 
-@patch('owca.resctrl.log.warning')
+@patch('wca.resctrl.log.warning')
 @patch('os.path.exists', return_value=True)
 @patch('os.makedirs', side_effect=OSError(errno.ENOSPC, "mock"))
 @patch('builtins.open', new=create_open_mock({
@@ -61,10 +61,11 @@ def test_resgroup_sync_no_space_left_on_device(makedirs_mock, exists_mock, log_w
 @patch('os.listdir', return_value=['1', '2'])
 def test_get_measurements(*mock):
     resgroup = ResGroup(name=RESCTRL_ROOT_NAME)
-    assert {'memory_bandwidth': 2, 'llc_occupancy': 2} == resgroup.get_measurements('best_efforts')
+    assert {'memory_bandwidth': 2, 'llc_occupancy': 2} == \
+        resgroup.get_measurements('best_efforts', True, True)
 
 
-@patch('owca.resctrl.SetEffectiveRootUid')
+@patch('wca.resctrl.SetEffectiveRootUid')
 @patch('os.makedirs')
 @pytest.mark.parametrize(
     'resgroup_name, pids, mongroup_name, '
@@ -112,7 +113,7 @@ def test_resgroup_add_pids(makedirs_mock, set_effective_root_uid_mock,
     set_effective_root_uid_mock.assert_has_calls(expected_setuid_calls, any_order=True)
 
 
-@patch('owca.resctrl.SetEffectiveRootUid')
+@patch('wca.resctrl.SetEffectiveRootUid')
 @patch('os.makedirs')
 @pytest.mark.parametrize('side_effect, log_call', [
     (OSError(errno.E2BIG, 'other'),
@@ -133,6 +134,6 @@ def test_resgroup_add_pids_invalid(makedirs_mock, set_effective_root_uid_mock,
         '/sys/fs/resctrl/mon_groups/c1/tasks': MagicMock()
     }
     with patch('builtins.open', new=create_open_mock(writes_mock)), patch(
-            'owca.resctrl.log') as log_mock:
+            'wca.resctrl.log') as log_mock:
         resgroup.add_pids(['123'], 'c1')
         log_mock.assert_has_calls([log_call])

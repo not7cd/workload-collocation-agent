@@ -1,8 +1,8 @@
 tests:
   - test_case_name1:	
     tasks: 
-      - /owca/task1 
-      - /owca/task2
+      - /wca/task1
+      - /wca/task2
 
     allocator: !StaticAllocator
       rules:
@@ -12,7 +12,7 @@ tests:
             cpu_shares: 10
     checks:
       - !FileCheck
-        path: /sys/fs/cgroup/cpu/owca/task1/cpu.shares
+        path: /sys/fs/cgroup/cpu/wca/task1/cpu.shares
         line: '10000'
         subvalue: '100'
       - !MetricCheck
@@ -21,8 +21,8 @@ tests:
 
   - test_case_name2:	
     tasks: 
-      - /owca/task2 
-      - /owca/task4
+      - /wca/task2
+      - /wca/task4
 
     allocator: !StaticAllocator
       rules:
@@ -32,7 +32,7 @@ tests:
             cpu_shares: 20
     checks:
       - !FileCheck
-        path: /sys/fs/cgroup/cpu/owca/task2/cpu.shares
+        path: /sys/fs/cgroup/cpu/wca/task2/cpu.shares
         line: '20000'
         subvalue: '20'
       - !MetricCheck

@@ -17,12 +17,13 @@ from unittest.mock import patch, mock_open, call
 
 import pytest
 
-from owca.allocations import InvalidAllocations
-from owca.allocators import RDTAllocation
-from owca.resctrl import ResGroup
-from owca.resctrl_allocations import RDTAllocationValue, RDTGroups, _parse_schemata_file_row, \
+from wca.allocations import InvalidAllocations
+from wca.allocators import RDTAllocation
+from wca.platforms import RDTInformation
+from wca.resctrl import ResGroup
+from wca.resctrl_allocations import RDTAllocationValue, RDTGroups, _parse_schemata_file_row, \
     _count_enabled_bits, check_cbm_mask, _is_rdt_suballocation_changed, _validate_domains
-from owca.testing import create_open_mock, allocation_metric
+from wca.testing import create_open_mock, allocation_metric
 
 
 @pytest.mark.parametrize(
@@ -97,15 +98,14 @@ def test_rdt_allocations_changeset(
     rdt_groups = RDTGroups(16)
 
     def convert(rdt_allocation):
+        rdt_information = RDTInformation(False, False, False, False, 'fffff', '1', 0, 0, 0)
         if rdt_allocation is not None:
             return RDTAllocationValue(container_name,
                                       rdt_allocation,
                                       resgroup,
                                       lambda: ['1'],
                                       platform_sockets=1,
-                                      rdt_mb_control_enabled=False,
-                                      rdt_cbm_mask='fffff',
-                                      rdt_min_cbm_bits='1',
+                                      rdt_information=rdt_information,
                                       rdt_groups=rdt_groups,
                                       common_labels={},
                                       )
@@ -153,14 +153,14 @@ def test_rdt_allocations_changeset(
             allocation_metric('rdt_mb', 30, group_name='be', domain_id='1', container_name='c1'),
         ]),
 ))
-def test_rdt_allocation_generate_metrics(rdt_allocation: RDTAllocation, extra_labels,
-                                         expected_metrics):
+def test_rdt_allocation_generate_metrics(rdt_allocation: RDTAllocation,
+                                         extra_labels, expected_metrics):
+    rdt_information = RDTInformation(True, True, True, True, 'fff', '1', 0, 0, 0)
     rdt_allocation_value = RDTAllocationValue(
         'c1',
         rdt_allocation, get_pids=lambda: [],
         resgroup=ResGroup(name=rdt_allocation.name or ''),
-        platform_sockets=1, rdt_mb_control_enabled=False,
-        rdt_cbm_mask='fff', rdt_min_cbm_bits='1',
+        platform_sockets=1, rdt_information=rdt_information,
         common_labels=extra_labels,
         rdt_groups=RDTGroups(10),
     )

@@ -17,8 +17,8 @@ from typing import List, Union, Optional
 import pytest
 from dataclasses import dataclass, field
 
-from owca import config
-from owca import testing
+from wca import config
+from wca import testing
 
 
 class FooEnum(Enum):

@@ -15,9 +15,9 @@
 
 import pytest
 
-from owca import config
-from owca import testing
-from owca.config import ConfigLoadError
+from wca import config
+from wca import testing
+from wca.config import ConfigLoadError
 
 
 class OldClass:

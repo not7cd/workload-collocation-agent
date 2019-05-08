@@ -16,10 +16,10 @@ from unittest.mock import patch, mock_open, call
 
 import pytest
 
-from owca.resctrl import check_resctrl, get_max_rdt_values, read_mon_groups_relation, \
+from wca.resctrl import check_resctrl, get_max_rdt_values, read_mon_groups_relation, \
     clean_taskless_groups
-from owca.resctrl_allocations import check_cbm_mask
-from owca.testing import create_open_mock
+from wca.resctrl_allocations import check_cbm_mask
+from wca.testing import create_open_mock
 
 
 @patch('builtins.open', new=create_open_mock({
@@ -36,7 +36,7 @@ def test_check_resctrl(*mock):
 @patch('os.path.isdir', return_value=True)
 @patch('os.path.exists', return_value=True)
 def test_clean_resctrl(exists_mock, isdir_mock, rmdir_mock, listdir_mock):
-    from owca.resctrl import cleanup_resctrl
+    from wca.resctrl import cleanup_resctrl
 
     schemata_mock = mock_open()
 
@@ -97,7 +97,7 @@ def test_clean_resctrl(exists_mock, isdir_mock, rmdir_mock, listdir_mock):
     )
 )
 def test_get_max_rdt_values(cbm_mask, platform_sockets, expected_max_rdt_l3, expected_max_rdt_mb):
-    got_max_rdt_l3, got_max_rdt_mb = get_max_rdt_values(cbm_mask, platform_sockets)
+    got_max_rdt_l3, got_max_rdt_mb = get_max_rdt_values(cbm_mask, platform_sockets, True, True)
     assert got_max_rdt_l3 == expected_max_rdt_l3
     assert got_max_rdt_mb == expected_max_rdt_mb
 
@@ -125,7 +125,7 @@ def test_read_mon_groups_relation(listdir_mock, isdir_mock):
 
 @patch('os.rmdir')
 def test_clean_tasksless_resctrl_groups(rmdir_mock):
-    with patch('owca.resctrl.open', create_open_mock({
+    with patch('wca.resctrl.open', create_open_mock({
         '/sys/fs/resctrl/mon_groups/c1/tasks': '',  # empty
         '/sys/fs/resctrl/mon_groups/c2/tasks': '1234',
         '/sys/fs/resctrl/empty/mon_groups/c3/tasks': '',

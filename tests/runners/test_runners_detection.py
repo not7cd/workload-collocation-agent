@@ -14,12 +14,12 @@
 from unittest.mock import Mock
 import pytest
 
-from owca import storage
-from owca.detectors import AnomalyDetector, LABEL_CONTENDED_TASK_ID, \
+from wca import storage
+from wca.detectors import AnomalyDetector, LABEL_CONTENDED_TASK_ID, \
     LABEL_CONTENDING_WORKLOAD_INSTANCE, LABEL_WORKLOAD_INSTANCE
-from owca.mesos import MesosNode
-from owca.runners.detection import DetectionRunner
-from owca.testing import metric, anomaly, \
+from wca.mesos import MesosNode
+from wca.runners.detection import DetectionRunner
+from wca.testing import metric, anomaly, \
     assert_metric, redis_task_with_default_labels, prepare_runner_patches, \
     platform_mock, assert_subdict, TASK_CPU_USAGE
 

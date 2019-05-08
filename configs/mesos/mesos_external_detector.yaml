@@ -9,7 +9,7 @@ runner: !DetectionRunner
     output_filename: '/tmp/output_anomalies.log'
 
   anomalies_storage: !KafkaStorage
-    topic: owca_anomalies
+    topic: wca_anomalies
     max_timeout_in_seconds: 5.
 
   # Example use of external component.

@@ -1,0 +1,22 @@
+[Unit]
+Description=Workload Collocation Agent
+
+[Service]
+ExecStart=/usr/bin/scl enable rh-python36 '/usr/bin/wca.pex \
+    --config /etc/wca/wca_config.yml \
+    --register $EXTRA_COMPONENT \
+    --log info'
+User=wca
+Group=wca
+# CAP_DAC_OVERRIDE allows to remove resctrl groups and CAP_SETUID allows to change effective uid to add tasks to the groups
+CapabilityBoundingSet=CAP_DAC_OVERRIDE CAP_SETUID
+AmbientCapabilities=CAP_DAC_OVERRIDE CAP_SETUID
+# We must avoid dropping capabilities after changing effective uid from root to wca
+SecureBits=no-setuid-fixup
+Restart=always
+RestartSec=5
+LimitNOFILE=500000
+WorkingDirectory=/var/lib/wca
+
+[Install]
+WantedBy=multi-user.target

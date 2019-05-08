@@ -16,8 +16,8 @@
 import pytest
 from unittest import mock
 
-from owca.metrics import Metric, MetricType
-import owca.storage as storage
+from wca.metrics import Metric, MetricType
+import wca.storage as storage
 
 
 @pytest.fixture
@@ -117,7 +117,7 @@ def test_convert_to_prometheus_exposition_format(mock_get_current_time, sample_m
     )
 
 
-@mock.patch('owca.storage.confluent_kafka.Producer',
+@mock.patch('wca.storage.confluent_kafka.Producer',
             return_value=mock.Mock(flush=mock.Mock(return_value=1)))
 def test_when_brocker_unavailable(mock_producer, sample_metrics):
     kafka_storage = storage.KafkaStorage(brokers_ips=["whatever because is ignored"], topic='some')
@@ -176,7 +176,7 @@ def test_grouping_metrics_by_metadata(sample_metrics_mixed):
     assert got_grouped == expected_grouped
 
 
-@mock.patch('owca.storage.get_current_time', return_value='1531729598000')
+@mock.patch('wca.storage.get_current_time', return_value='1531729598000')
 def test_convert_to_prometheus_exposition_format_grouped_case(
         mock_get_current_time, sample_metrics_mixed
 ):

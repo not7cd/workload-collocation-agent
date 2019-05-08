@@ -12,15 +12,15 @@
 # limitations under the License.
 from unittest.mock import MagicMock, patch
 
-from owca.nodes import Task
-from owca.config import register
+from wca.nodes import Task
+from wca.config import register
 
-from owca.extra.tester import Tester, FileCheck, MetricCheck
-from owca.extra.static_allocator import StaticAllocator
+from wca.extra.tester import Tester, FileCheck, MetricCheck
+from wca.extra.static_allocator import StaticAllocator
 
 
-@patch('owca.extra.tester._delete_cgroup')
-@patch('owca.extra.tester._create_cgroup')
+@patch('wca.extra.tester._delete_cgroup')
+@patch('wca.extra.tester._create_cgroup')
 @patch('sys.exit')
 def test_tester(
         mock_sys_exit: MagicMock,

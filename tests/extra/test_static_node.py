@@ -13,9 +13,9 @@
 # limitations under the License.
 from unittest.mock import Mock, patch
 
-from owca.extra.static_node import StaticNode
-from owca.nodes import Task
-from owca.testing import mock_open
+from wca.extra.static_node import StaticNode
+from wca.nodes import Task
+from wca.testing import mock_open
 
 
 @patch('os.path.exists', Mock(return_value=True))

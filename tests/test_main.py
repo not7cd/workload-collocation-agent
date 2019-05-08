@@ -15,22 +15,22 @@
 
 from unittest import mock
 
-from owca import main
+from wca import main
 
 yaml_config = '''
 runner: !DummyRunner
 '''
 
 
-@mock.patch('sys.argv', ['owca', '-c',
+@mock.patch('sys.argv', ['wca', '-c',
                          'configs/see_yaml_config_variable_above.yaml',
-                         '-r', 'owca.testing:DummyRunner', '-l', 'critical',
+                         '-r', 'wca.testing:DummyRunner', '-l', 'critical',
                          '--root'])
 @mock.patch('os.rmdir')
-@mock.patch('owca.config.exists', return_value=True)
-@mock.patch('owca.config.open', mock.mock_open(read_data=yaml_config))
-@mock.patch('owca.perf.PerfCounters')
-@mock.patch('owca.main.exit')
+@mock.patch('wca.config.exists', return_value=True)
+@mock.patch('wca.config.open', mock.mock_open(read_data=yaml_config))
+@mock.patch('wca.perf.PerfCounters')
+@mock.patch('wca.main.exit')
 def test_main(*mocks):
     main.main()
 
@@ -41,17 +41,17 @@ runner: !DummyRunner
 '''
 
 
-@mock.patch('owca.main.log.error')
-@mock.patch('sys.argv', ['owca', '-c',
+@mock.patch('wca.main.log.error')
+@mock.patch('sys.argv', ['wca', '-c',
                          'configs/see_yaml_config_variable_above.yaml',
-                         '-r', 'owca.testing:DummyRunner', '-l', 'critical',
+                         '-r', 'wca.testing:DummyRunner', '-l', 'critical',
                          '--root'])
 @mock.patch('os.rmdir')
-@mock.patch('owca.config.exists', return_value=True)
-@mock.patch('owca.config.open', mock.mock_open(
+@mock.patch('wca.config.exists', return_value=True)
+@mock.patch('wca.config.open', mock.mock_open(
     read_data=yaml_config_unknown_field))
-@mock.patch('owca.perf.PerfCounters')
-@mock.patch('owca.main.exit')
+@mock.patch('wca.perf.PerfCounters')
+@mock.patch('wca.main.exit')
 def test_main_unknown_field(mock_exit, perf_counters, mock_rmdir,
                             mock_argv, mock_log_error):
     main.main()

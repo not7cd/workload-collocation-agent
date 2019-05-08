@@ -16,13 +16,14 @@ from unittest.mock import patch, Mock
 from typing import List
 import pytest
 
-from owca.containers import ContainerSet, Container, \
+from wca.containers import ContainerSet, Container, \
     ContainerManager, ContainerInterface, _find_new_and_dead_tasks
-from owca.cgroups import Cgroup
-from owca.perf import PerfCounters
-from owca.resctrl import ResGroup
-from owca.testing import task, container
-from owca.allocators import AllocationConfiguration
+from wca.cgroups import Cgroup
+from wca.platforms import RDTInformation
+from wca.perf import PerfCounters
+from wca.resctrl import ResGroup
+from wca.testing import task, container
+from wca.allocators import AllocationConfiguration
 
 
 def assert_equal_containers(a: ContainerInterface, b: ContainerInterface):
@@ -84,12 +85,12 @@ def test_find_new_and_dead_tasks(discovered_tasks, containers,
     assert_equal_containers_list(containers_to_delete, expected_containers_to_delete)
 
 
-@patch('owca.resctrl.ResGroup.remove')
-@patch('owca.resctrl.ResGroup.add_pids')
-@patch('owca.resctrl.clean_taskless_groups')
-@patch('owca.perf.PerfCounters')
-@patch('owca.containers.Container.sync')
-@patch('owca.containers.Container.get_pids')
+@patch('wca.resctrl.ResGroup.remove')
+@patch('wca.resctrl.ResGroup.add_pids')
+@patch('wca.resctrl.clean_taskless_groups')
+@patch('wca.perf.PerfCounters')
+@patch('wca.containers.Container.sync')
+@patch('wca.containers.Container.get_pids')
 @pytest.mark.parametrize('subcgroups', ([], ['/t1/c1', '/t1/c2']))
 @pytest.mark.parametrize(
     'tasks_, pre_running_containers_, mon_groups_relation, expected_running_containers_',
@@ -140,7 +141,8 @@ def test_sync_containers_state(_, get_pids_mock, sync_mock, perf_counters_mock,
     expected_running_containers = {task(t, subcgroups_paths=subcgroups): container(c, subcgroups)
                                    for t, c in expected_running_containers_.items()}
 
-    containers_manager = ContainerManager(rdt_enabled=True, rdt_mb_control_enabled=False,
+    rdt_information = RDTInformation(True, True, True, True, 'fff', '1', 0, 0, 0)
+    containers_manager = ContainerManager(rdt_information=rdt_information,
                                           platform_cpus=1,
                                           allocation_configuration=AllocationConfiguration(),
                                           event_names=[],
@@ -149,7 +151,7 @@ def test_sync_containers_state(_, get_pids_mock, sync_mock, perf_counters_mock,
     containers_manager.containers = dict(pre_running_containers)
 
     # Call sync_containers_state
-    with patch('owca.resctrl.read_mon_groups_relation', return_value=mon_groups_relation):
+    with patch('wca.resctrl.read_mon_groups_relation', return_value=mon_groups_relation):
         got_running_containers = containers_manager.sync_containers_state(tasks)
 
     # -----------------------
@@ -174,11 +176,11 @@ def test_sync_containers_state(_, get_pids_mock, sync_mock, perf_counters_mock,
 _ANY_METRIC_VALUE = 2
 
 
-@patch('owca.cgroups.Cgroup', spec=Cgroup,
+@patch('wca.cgroups.Cgroup', spec=Cgroup,
        get_measurements=Mock(return_value={'cgroup_metric__1': _ANY_METRIC_VALUE}))
-@patch('owca.perf.PerfCounters', spec=PerfCounters,
+@patch('wca.perf.PerfCounters', spec=PerfCounters,
        get_measurements=Mock(return_value={'perf_event_metric__1': _ANY_METRIC_VALUE}))
-@patch('owca.containers.ResGroup', spec=ResGroup,
+@patch('wca.containers.ResGroup', spec=ResGroup,
        get_measurements=Mock(return_value={'foo': 3}))
 def test_containerset_get_measurements(resgroup_mock, perfcounter_mock, cgroup_mock):
     """Check whether summing of metrics for children containers are done properly.
@@ -212,8 +214,8 @@ def _smart_get_pids():
     return fun
 
 
-@patch('owca.cgroups.Cgroup')
-@patch('owca.containers.Container', spec=Container, get_pids=Mock(side_effect=_smart_get_pids()))
+@patch('wca.cgroups.Cgroup')
+@patch('wca.containers.Container', spec=Container, get_pids=Mock(side_effect=_smart_get_pids()))
 def test_containerset_get_pids(*args):
     subcgroups_paths = ['/t1/c1', '/t1/c2', '/t1/c3']
     containerset = container('/t1', subcgroups_paths)
@@ -222,17 +224,17 @@ def test_containerset_get_pids(*args):
     assert containerset.get_pids() == [str(i) for i in range(1, 7)]
 
 
-@patch('owca.containers.ResGroup.get_allocations', return_value={})
-@patch('owca.cgroups.Cgroup.get_allocations', return_value={})
-@patch('owca.containers.Container', spec=Container)
+@patch('wca.containers.ResGroup.get_allocations', return_value={})
+@patch('wca.cgroups.Cgroup.get_allocations', return_value={})
+@patch('wca.containers.Container', spec=Container)
 def test_container_get_allocations(*mock):
     c = container("/t1", [], rdt_enabled=True, resgroup_name='t1')
     assert c.get_allocations() == {}
 
 
-@patch('owca.containers.ResGroup.get_allocations', return_value={})
-@patch('owca.cgroups.Cgroup.get_allocations', return_value={})
-@patch('owca.containers.ContainerSet', spec=ContainerSet)
+@patch('wca.containers.ResGroup.get_allocations', return_value={})
+@patch('wca.cgroups.Cgroup.get_allocations', return_value={})
+@patch('wca.containers.ContainerSet', spec=ContainerSet)
 def test_containerset_get_allocations(*mock):
     c = container("/t1", ['/t1/s1', '/t1/s2'], rdt_enabled=True, resgroup_name='t1')
     assert c.get_allocations() == {}

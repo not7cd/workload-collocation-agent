@@ -15,8 +15,8 @@
 
 from io import StringIO
 
-from owca.metrics import Metric, MetricType
-from owca.wrapper.parser_rpc_perf import parse
+from wca.metrics import Metric, MetricType
+from wca.wrapper.parser_rpc_perf import parse
 
 
 def test_parse():

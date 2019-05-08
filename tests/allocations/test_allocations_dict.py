@@ -16,9 +16,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from owca.allocations import AllocationsDict, BoxedNumeric, AllocationValue, InvalidAllocations, \
+from wca.allocations import AllocationsDict, BoxedNumeric, AllocationValue, InvalidAllocations, \
     LabelsUpdater
-from owca.testing import allocation_metric, metric
+from wca.testing import allocation_metric, metric
 
 
 class BoxedNumericDummy(BoxedNumeric):

@@ -16,8 +16,8 @@ from unittest.mock import patch, call, mock_open
 
 import pytest
 
-from owca.metrics import Metric
-from owca.testing import create_open_mock, _is_dict_match, assert_metric, assert_subdict
+from wca.metrics import Metric
+from wca.testing import create_open_mock, _is_dict_match, assert_metric, assert_subdict
 
 
 def test_create_open_mock_autocreated():

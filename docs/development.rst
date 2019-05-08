@@ -28,7 +28,7 @@ Note: that on production system, you should use Python 3.6 as describe `here <in
 Getting source code and preparing python virtualenv
 ---------------------------------------------------
 
-OWCA uses `pipenv <https://pipenv.readthedocs.io/en/latest/>`_ to create python virtualenv with all tools required to run, validate and build the project.
+WCA uses `pipenv <https://pipenv.readthedocs.io/en/latest/>`_ to create python virtualenv with all tools required to run, validate and build the project.
 
 1. Install pip using 3.6 Python interpreter (available in ``epel`` release and "Software Collections" python collections:
 
@@ -46,19 +46,19 @@ See `pragmatic installation of pipenv`_ for more details on installing pipenv.
 
 .. _`pragmatic installation of pipenv`: https://docs.pipenv.org/install/#pragmatic-installation-of-pipenv
 
-3. Clone OWCA repository:
+3. Clone WCA repository:
 
 .. code-block:: shell
 
-    git clone https://github.com/intel/owca
+    git clone https://github.com/intel/workload-collocation-agent
 
-4. Further commands should be run from owca root directory:
+4. Further commands should be run from wca root directory:
 
 .. code-block:: shell
 
-    cd owca
+    cd workload-collocation-agent
 
-5. Prepare virtual environment for OWCA:
+5. Prepare virtual environment for WCA:
 
 .. code-block:: shell
 
@@ -90,7 +90,7 @@ You can use make to check code style, or build packages:
 .. code-block:: shell
 
     make flake8
-    make owca_package
+    make wca_package
     make wrapper_package
 
 Running locally (for development purposes)
@@ -101,7 +101,7 @@ You can run without building a distribution like this:
 .. code-block:: shell
     
     python3.6 -mpipenv shell
-    sudo env PYTHONPATH=. `which python` owca/main.py --root -c configs/extra/static_measurements.yaml
+    sudo env PYTHONPATH=. `which python` wca/main.py --root -c configs/extra/static_measurements.yaml
 
 
 Using example allocator:
@@ -110,7 +110,7 @@ Using example allocator:
 .. code-block:: shell
 
     python3.6 -mpipenv shell
-    sudo env PYTHONPATH=. `which python` owca/main.py --root -c configs/extra/static_allocator.yaml
+    sudo env PYTHONPATH=. `which python` wca/main.py --root -c configs/extra/static_allocator.yaml
 
 Fast distribution rebuild
 -------------------------
@@ -119,7 +119,7 @@ When rebuilding you can use existing PEX build cache, to speedup building proces
 
 .. code-block:: shell
 
-    PEX_OPTIONS='--no-index --cache-ttl=604800' make owca_package
+    PEX_OPTIONS='--no-index --cache-ttl=604800' make wca_package
 
 Running PEX in debug mode
 -------------------------
@@ -128,4 +128,4 @@ It will try to find an ipdb or use internal built-in pdb module before running m
 
 .. code-block:: shell
 
-    PEX_MODULE=owca.main:debug ./dist/owca.pex
+    PEX_MODULE=wca.main:debug ./dist/wca.pex
