@@ -47,7 +47,7 @@ if component_type != 'controller' and component_type != 'injector' and component
 # Variables which cannot be changed differently than just by editing this file.
 
 # Paths inside container.
-config_path = '/prep_config/owca_config.raw'
+config_path = '/prep_config/wca_config.raw'
 specjbb_jar = '/home/specjbb/specjbb2015.jar'
 specjbb_wrapper = '/usr/bin/specjbb_wrapper.pex'
 
