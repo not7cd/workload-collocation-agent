@@ -27,7 +27,7 @@ data:
         client_private_key: "/etc/kubernetes/ssl/apiserver-kubelet-client.key"
         client_cert: "/etc/kubernetes/ssl/apiserver-kubelet-client.crt"
         kubelet_endpoint: "https://100.64.176.33:10250" 
-        monitored_namespaces: ["kubecon-demo"]
+        monitored_namespaces: ["workloads"]
       extra_labels:
         env_uniq_id: '33'
         own_ip: '100.64.176.33'
@@ -44,10 +44,12 @@ data:
       # Allocator configuration
       allocator: !StaticAllocator
         rules: 
-        - name: Static default rule for all tasks.
+        - name: Default rule for all tasks.
           allocations:
             cpu_quota: 1.
             cpu_shares: 10
+            rdt:
+              name: ''
         # Alternate way to provide allocations rules.
         config: "/etc/wca/static_allocator.yml"
 
@@ -60,7 +62,7 @@ data:
   # 
   static_allocator.yml: |
 
-    - name: best-effort rule from static file.
+    - name: Best-effort rule from static file.
       # Labels selector to apply allocations rules only for specified tasks.
       labels:
         task_kind: best-effort
@@ -72,7 +74,7 @@ data:
           mb: 'MB:0=10;1=10'
           l3: 'L3:0=1;1=1'
 
-    - name: latency-critical rule from static-file.
+    - name: Latency-critical rule from static-file.
       # Labels selector to apply allocations rules only for specified tasks.
       labels:
         task_kind: latency-critical
@@ -109,6 +111,8 @@ metadata:
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "9100"
+  labels:
+    version: '1'
 spec:
   hostPID: true
   hostIPC: true
@@ -120,7 +124,7 @@ spec:
   containers:
 
     - name: wca
-      image: 100.64.176.12:80/wca:344afd8b0bbb6ce2c0744d5c1d14ba766498c257
+      image: 100.64.176.12:80/wca:dbc8b5696e889a86003889df3c830480ab06628a
       securityContext:
         privileged: true
       env:

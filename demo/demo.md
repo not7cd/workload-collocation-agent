@@ -17,7 +17,7 @@ kubectl create namespace wca
 kubectl apply -f wca.yaml
 kubectl apply -f wca.yaml --overwrite --force
 
-# backup
+# Backup
 kubectl delete pod wca --namespace wca
 kubectl describe pod wca --namespace wca
 kubectl get configmap wca-config --namespace wca
@@ -31,8 +31,6 @@ kubectl delete configmap wca-allocator-plugin --namespace wca
 while sleep 1; do kubectl logs -f wca -c wca --namespace wca; done
 
 
-# Show wca state
-
 
 # #############################
 #           Workloads
@@ -42,6 +40,7 @@ while sleep 1; do kubectl logs -f wca -c wca --namespace wca; done
 kubectl create namespace workloads
 kubectl config set-context --current --namespace workloads
 kubectl create -f stress-ng1.yaml
+kubectl get pods
 kubectl get pods stress-ng1
 kubectl get pods stress-ng2
 
