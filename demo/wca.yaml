@@ -60,8 +60,13 @@ data:
 
       # Allocator logic provided as python source code.
       # Requires explict reqistration as command line parameters.
-      allocator: !ExampleAllocator
-        ipc_threshold: 1.5
+      # allocator: !ExampleAllocator
+
+
+      ### Nop allocator
+      #
+
+      allocator: !NOPAllocator
 
 
   #
