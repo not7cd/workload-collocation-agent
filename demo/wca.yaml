@@ -41,21 +41,29 @@ data:
         overwrite: True
         output_filename: /var/lib/wca/allocations.prom
 
-      # Allocator configuration
-      allocator: !StaticAllocator
-        rules: 
-        - name: Default rule for all tasks.
-          allocations:
-            cpu_quota: 1.
-            cpu_shares: 10
-            rdt:
-              name: ''
-        # Alternate way to provide allocations rules.
-        config: "/etc/wca/static_allocator.yml"
+      # ### Static allocator
+      # allocator: !StaticAllocator
+      #   rules: 
+      #   - name: Default rule for all tasks.
+      #     allocations:
+      #       cpu_quota: 1.
+      #       cpu_shares: 10
+      #       rdt:
+      #         name: ''
+      #   # Alternate way to provide allocations rules.
+      #   config: "/etc/wca/static_allocator.yml"
+
+      #
+      # ### Dummy allocator
+      #
+      # allocator: !DummyAllocator
 
       # Allocator logic provided as python source code.
       # Requires explict reqistration as command line parameters.
-      # allocator: !ExampleAllocator
+      allocator: !ExampleAllocator
+        ipc_threshold: 1.5
+        preasure_threshold: 0.5
+
 
   #
   # Example of configuring of built-in rules based allocator.
@@ -112,7 +120,7 @@ metadata:
     prometheus.io/scrape: "true"
     prometheus.io/port: "9100"
   labels:
-    version: '1'
+    version: '2'
 spec:
   hostPID: true
   hostIPC: true
@@ -124,25 +132,25 @@ spec:
   containers:
 
     - name: wca
-      image: 100.64.176.12:80/wca:dbc8b5696e889a86003889df3c830480ab06628a
+      image: 100.64.176.12:80/wca:6252af30ca928abbb6cbd35a48722dbb12d6d85b
       securityContext:
         privileged: true
       env:
         - name: LOG
-          value: debug
+          value: info
         # Enable this for python based allocator plugin.
         - name: PEX_INHERIT_PATH
           value: 'true'
-        - name: PYTHONPATH
-          value: /etc/wca/
-        - name: EXTRA_COMPONENT
-          value: dummy_allocator:DummyAllocator
         # - name: PYTHONPATH
-        #   value: /
+        #   value: /etc/wca/
         # - name: EXTRA_COMPONENT
-        #   value: example_allocator:ExampleAllocator
-        # - name: EXTRA_OPTIONS
-        #   value: '--log example_allocator:debug'
+        #   value: dummy_allocator:DummyAllocator
+        - name: PYTHONPATH
+          value: /
+        - name: EXTRA_COMPONENT
+          value: example_allocator:ExampleAllocator
+        - name: EXTRA_OPTIONS
+          value: '--log example_allocator:debug'
       volumeMounts:
         - name: kubeletcert
           mountPath: /etc/kubernetes/ssl/
@@ -157,9 +165,9 @@ spec:
         - name: dev-cpu
           mountPath: /dev/cpu
         ### ENABLE this for python-based allocator plugin.
-        # - name: wca-allocator-plugin
-        #   mountPath: /example_allocator.py
-        #   subPath: example_allocator.py
+        - name: wca-allocator-plugin
+          mountPath: /example_allocator.py
+          subPath: example_allocator.py
 
     - name: node-exporter
       image: prom/node-exporter@sha256:ffc3e0adf58771cb2097aa0b074a6fe68b4925ba75c2e1c41f41ae656eebee11
@@ -207,9 +215,9 @@ spec:
     - name: var-lib-wca
       emptyDir: {}
     ### ENABLE this for python-based plugin
-    # - name: wca-allocator-plugin
-    #   configMap:
-    #     name: wca-allocator-plugin
+    - name: wca-allocator-plugin
+      configMap:
+        name: wca-allocator-plugin
     
     #### node_exporter volumes
     - name: proc

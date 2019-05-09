@@ -14,8 +14,10 @@ kubectl get all --namespace workloads
 kubectl create namespace wca
 
 ## Deploy WCA pod with static allocator configuration
+kubectl delete pod wca --namespace wca
 kubectl apply -f wca.yaml
-kubectl apply -f wca.yaml --overwrite --force
+
+kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
 
 # Backup
 kubectl delete pod wca --namespace wca
@@ -24,11 +26,15 @@ kubectl get configmap wca-config --namespace wca
 kubectl get pod wca -o wide --namespace wca
 
 ## Deploy WCA allocator python-based plugin as configmap
-kubectl create configmap wca-allocator-plugin --from-file example_allocator.py --namespace wca
-kubectl delete configmap wca-allocator-plugin --namespace wca
+kubectl delete configmap wca-allocator-plugin --namespace wca ; kubectl create configmap wca-allocator-plugin --from-file example_allocator.py --namespace wca
+
+kubectl get configmap wca-allocator-plugin --namespace wca
+
 
 ## WCA pod logs
 while sleep 1; do kubectl logs -f wca -c wca --namespace wca; done
+
+
 
 
 
@@ -40,6 +46,7 @@ while sleep 1; do kubectl logs -f wca -c wca --namespace wca; done
 kubectl create namespace workloads
 kubectl config set-context --current --namespace workloads
 kubectl create -f stress-ng1.yaml
+kubectl create -f stress-ng2-lc.yaml
 kubectl get pods
 kubectl get pods stress-ng1
 kubectl get pods stress-ng2

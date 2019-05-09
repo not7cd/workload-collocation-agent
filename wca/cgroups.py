@@ -128,7 +128,8 @@ class Cgroup:
             self._write(CPU_PERIOD, self.allocation_configuration.cpu_quota_period)
 
         if normalized_quota >= QUOTA_NORMALIZED_MAX:
-            log.warning('Quota greater than allowed. Not setting quota.')
+            if normalized_quota > QUOTA_NORMALIZED_MAX:
+                log.warning('Quota greater than allowed. Not setting quota.')
             quota = QUOTA_NOT_SET
         else:
             # synchronize period if necessary

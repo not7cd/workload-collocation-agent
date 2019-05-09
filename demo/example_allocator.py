@@ -29,7 +29,8 @@ class ExampleAllocator(Allocator):
     """Simple allocator that watches over IPC (instruction per cycles) of latency-critical tasks,
     and reacts by throttling best-effort tasks. """
 
-    threashold: float = 1.
+    ipc_threshold: float = 1.
+    preasure_threshold: float = 1.
 
     def allocate(self, platform, measurements, resources, labels, allocations):
 
@@ -42,14 +43,15 @@ class ExampleAllocator(Allocator):
         # Calculate IPC preasure ...
         preasure = 0.
         for task in lc_tasks:
-            ipc = measurements[task].get('ipc', 1.0)
-            if ipc < 1.:
-                preasure += 1/measurements[task]['ipc']
+            if 'ipc' in measurements[task]:
+                ipc = measurements[task]['ipc']
+                if ipc < self.ipc_threshold:
+                    preasure += 1/ipc
 
         new_allocations = {}
         # Thortlle or enable best-efforts tasks based on preasure.
         if be_tasks:
-            if preasure > self.threashold:
+            if preasure > self.preasure_threshold:
                 allocation = THROTTLE
                 log.info('Preasure=%r -> thorttle %s best-effort tasks', preasure, len(be_tasks))
             else:
