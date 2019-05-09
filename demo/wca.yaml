@@ -1,0 +1,222 @@
+kind: Namespace 
+apiVersion: v1 
+metadata:
+    name: wca
+
+---
+
+##########################################
+# Example configuration 
+##########################################
+
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+    name: wca-config
+    namespace: wca
+data:
+  wca_config.yml: |
+
+    runner: !AllocationRunner
+      action_delay: 5.0
+      rdt_enabled: true
+      enable_derived_metrics: True
+      node: !KubernetesNode
+        # We support two options: cgroupfs, systemd.
+        cgroup_driver: cgroupfs
+        client_private_key: "/etc/kubernetes/ssl/apiserver-kubelet-client.key"
+        client_cert: "/etc/kubernetes/ssl/apiserver-kubelet-client.crt"
+        kubelet_endpoint: "https://100.64.176.33:10250" 
+        monitored_namespaces: ["kubecon-demo"]
+      extra_labels:
+        env_uniq_id: '33'
+        own_ip: '100.64.176.33'
+      metrics_storage: !LogStorage
+        overwrite: True
+        output_filename: /var/lib/wca/metrics.prom
+      anomalies_storage: !LogStorage
+        overwrite: True
+        output_filename: /var/lib/wca/anomalies.prom
+      allocations_storage: !LogStorage
+        overwrite: True
+        output_filename: /var/lib/wca/allocations.prom
+
+      # Allocator configuration
+      allocator: !StaticAllocator
+        rules: 
+        - name: Static default rule for all tasks.
+          allocations:
+            cpu_quota: 1.
+            cpu_shares: 10
+        # Alternate way to provide allocations rules.
+        config: "/etc/wca/static_allocator.yml"
+
+      # Allocator logic provided as python source code.
+      # Requires explict reqistration as command line parameters.
+      # allocator: !ExampleAllocator
+
+  #
+  # Example of configuring of built-in rules based allocator.
+  # 
+  static_allocator.yml: |
+
+    - name: best-effort rule from static file.
+      # Labels selector to apply allocations rules only for specified tasks.
+      labels:
+        task_kind: best-effort
+      allocations:
+        cpu_quota: 0.02
+        cpu_shares: 2
+        rdt:
+          name: best-effort
+          mb: 'MB:0=10;1=10'
+          l3: 'L3:0=1;1=1'
+
+    - name: latency-critical rule from static-file.
+      # Labels selector to apply allocations rules only for specified tasks.
+      labels:
+        task_kind: latency-critical
+      allocations:
+        cpu_quota: 1.
+        cpu_shares: 1000
+        rdt:
+          name: latency-critical
+          mb: 'MB:0=100;1=100'
+          l3: 'L3:0=7ff;1=7ff'
+
+  #
+  # Example of dummy allocator, that justs returns hello_world metric.
+  # 
+  dummy_allocator.py: |
+    from wca.metrics import Metric
+    from wca.allocators import Allocator
+    class DummyAllocator(Allocator):
+        def allocate(self, *args):
+            return {}, [], [Metric('hello_world', 1)]
+
+
+---
+
+##########################################
+# WCA pod
+##########################################
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wca
+  namespace: wca
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9100"
+spec:
+  hostPID: true
+  hostIPC: true
+  hostNetwork: true
+  terminationGracePeriodSeconds: 0
+  nodeSelector:
+    own_ip: 100.64.176.33
+
+  containers:
+
+    - name: wca
+      image: 100.64.176.12:80/wca:344afd8b0bbb6ce2c0744d5c1d14ba766498c257
+      securityContext:
+        privileged: true
+      env:
+        - name: LOG
+          value: debug
+        # Enable this for python based allocator plugin.
+        - name: PEX_INHERIT_PATH
+          value: 'true'
+        - name: PYTHONPATH
+          value: /etc/wca/
+        - name: EXTRA_COMPONENT
+          value: dummy_allocator:DummyAllocator
+        # - name: PYTHONPATH
+        #   value: /
+        # - name: EXTRA_COMPONENT
+        #   value: example_allocator:ExampleAllocator
+        # - name: EXTRA_OPTIONS
+        #   value: '--log example_allocator:debug'
+      volumeMounts:
+        - name: kubeletcert
+          mountPath: /etc/kubernetes/ssl/
+        - name: wca-config
+          mountPath: /etc/wca/
+        - name: var-lib-wca
+          mountPath: /var/lib/wca
+        - name: cgroup
+          mountPath: /sys/fs/cgroup/
+        - name: resctrl
+          mountPath: /sys/fs/resctrl/
+        - name: dev-cpu
+          mountPath: /dev/cpu
+        ### ENABLE this for python-based allocator plugin.
+        # - name: wca-allocator-plugin
+        #   mountPath: /example_allocator.py
+        #   subPath: example_allocator.py
+
+    - name: node-exporter
+      image: prom/node-exporter@sha256:ffc3e0adf58771cb2097aa0b074a6fe68b4925ba75c2e1c41f41ae656eebee11
+      securityContext:
+        privileged: true
+      args:
+        - --collector.procfs
+        - /host/proc
+        - --collector.sysfs
+        - /host/sys
+        - --collector.filesystem.ignored-mount-points
+        - '"^/(sys|proc|dev|host|etc)($|/)"'
+        - --collector.textfile.directory
+        - /var/lib/wca
+
+      volumeMounts:
+        - name: var-lib-wca
+          mountPath: /var/lib/wca
+        - name: dev
+          mountPath: /host/dev
+        - name: proc
+          mountPath: /host/proc
+        - name: sys
+          mountPath: /host/sys
+        - name: rootfs
+          mountPath: /rootfs
+
+  volumes:
+    #### Workload Collocation Agent volumes
+    - name: wca-config
+      configMap:
+        name: wca-config
+    - name: cgroup
+      hostPath:
+        path: /sys/fs/cgroup/
+    - name: resctrl
+      hostPath:
+        path: /sys/fs/resctrl/
+    - name: kubeletcert
+      hostPath:
+        path: /etc/kubernetes/ssl/
+    - name: dev-cpu
+      hostPath:
+        path: /dev/cpu
+    - name: var-lib-wca
+      emptyDir: {}
+    ### ENABLE this for python-based plugin
+    # - name: wca-allocator-plugin
+    #   configMap:
+    #     name: wca-allocator-plugin
+    
+    #### node_exporter volumes
+    - name: proc
+      hostPath:
+        path: /proc
+    - name: dev
+      hostPath:
+        path: /dev
+    - name: sys
+      hostPath:
+        path: /sys
+    - name: rootfs
+      hostPath:
+        path: /
