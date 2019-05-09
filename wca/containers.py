@@ -28,6 +28,7 @@ from wca.nodes import Task
 from wca.platforms import RDTInformation
 from wca.profiling import profiler
 from wca.resctrl import ResGroup
+from wca.logger import TRACE
 
 log = logging.getLogger(__name__)
 
@@ -388,7 +389,7 @@ class ContainerManager:
                            if task in self.containers}
 
         if new_tasks:
-            log.debug('sync_containers_state: found %d new tasks', len(new_tasks))
+            log.debug('Found %d new tasks', len(new_tasks))
             log.log(logger.TRACE, 'sync_containers_state: new_tasks=%r', new_tasks)
 
         # Prepare state of currently assigned resgroups
@@ -398,21 +399,21 @@ class ContainerManager:
             assert self._rdt_information.is_monitoring_enabled(), \
                 "rdt_enabled requires RDT monitoring for keeping groups relation."
             mon_groups_relation = resctrl.read_mon_groups_relation()
-            log.debug('mon_groups_relation (before cleanup): %s',
-                      pprint.pformat(mon_groups_relation))
+            log.log(TRACE, 'mon_groups_relation (before cleanup): %s',
+                    pprint.pformat(mon_groups_relation))
             resctrl.clean_taskless_groups(mon_groups_relation)
 
             mon_groups_relation = resctrl.read_mon_groups_relation()
-            log.debug('mon_groups_relation (after cleanup): %s',
-                      pprint.pformat(mon_groups_relation))
+            log.log(TRACE, 'mon_groups_relation (after cleanup): %s',
+                    pprint.pformat(mon_groups_relation))
 
             # Calculate inverse relation of container_name
             # to res_group name based on mon_groups_relations.
             for ctrl_group, container_names in mon_groups_relation.items():
                 for container_name in container_names:
                     container_name_to_ctrl_group[container_name] = ctrl_group
-            log.debug('container_name_to_ctrl_group: %s',
-                      pprint.pformat(container_name_to_ctrl_group))
+            log.log(TRACE, 'container_name_to_ctrl_group: %s',
+                    pprint.pformat(container_name_to_ctrl_group))
 
         # Create new containers and store them.
         for new_task in new_tasks:
