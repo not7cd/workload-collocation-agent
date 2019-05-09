@@ -17,7 +17,7 @@ spec:
   containers:
 
     - name: wca
-      image: 100.64.176.12:80/wca:f75f0a395616af84b26a1344667ccda68fe949ad
+      image: 100.64.176.12:80/wca:8db3687566f229701b8e45985f176db6bf37b80b
       env:
         - name: LOG
           value: trace

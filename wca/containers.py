@@ -382,13 +382,10 @@ class ContainerManager:
                 container_to_cleanup.cleanup()
 
         # Recreate self.containers.
-        # tasks[tasks.index[task] trick will replace existing task instance with
         # mutated state e.g. labels for Kubernetes
-        self.containers = {tasks[tasks.index[task]]: container
-                           for task, container in self.containers.items()
-                           if task in tasks}
-
-        log.log(logger.TRACE, 'sync_containers_state: existing_tasks=%r', self.containers.tasks)
+        self.containers = {task: self.containers[task]
+                           for task in tasks
+                           if task in self.containers}
 
         if new_tasks:
             log.debug('sync_containers_state: found %d new tasks', len(new_tasks))
@@ -432,6 +429,8 @@ class ContainerManager:
                     # Every newly detected container is first assigned to the root group.
                     container.set_resgroup(ResGroup(name=''))
             container.sync()
+
+        log.log(logger.TRACE, 'sync_containers_state: containers=%r', self.containers)
 
         return self.containers
 
