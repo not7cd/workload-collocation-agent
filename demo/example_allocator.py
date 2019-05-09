@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from wca.allocators import Allocator, RDTAllocation, Metric
+from wca.detectors import ContentionAnomaly, ContendedResource
 import logging
 log = logging.getLogger(__name__)
 
@@ -26,10 +27,10 @@ ENABLE = dict(
 
 @dataclass
 class ExampleAllocator(Allocator):
-    """Simple allocator that watches over IPC (instruction per cycles) of latency-critical tasks,
-    and reacts by throttling best-effort tasks. """
+    """Simple allocator that watches over MPKI (cache misses per kilo instruction) of
+    latency-critical tasks, and reacts by throttling best-effort tasks. """
 
-    ipc_threshold: float = 1.
+    mpki_threshold: float = 1.
 
     def allocate(self, platform, measurements, resources, labels, allocations):
 
@@ -40,26 +41,38 @@ class ExampleAllocator(Allocator):
                   len(lc_tasks), len(be_tasks))
 
         # Calculate IPC accorss all latency critical tasks...
-        ipc = 0
+        anomalies = []
+        mpki = 0
         for task in lc_tasks:
-            if 'ipc' in measurements[task]:
-                ipc += measurements[task]['ipc']
+            if 'cache_misses_per_kilo_instructions' in measurements[task]:
+                mpki += measurements[task]['cache_misses_per_kilo_instructions']
+                if mpki < self.mpki_threshold:
+                    anomalies.append(
+                        ContentionAnomaly(
+                            resource=ContendedResource.LLC,
+                            contended_task_id=task,
+                            contending_task_ids=be_tasks,
+                            metrics=[
+                                Metric(name='lc_mpki', value=mpki)
+                            ]
+                        )
+                    )
 
         new_allocations = {}
         # Thortlle or enable best-efforts tasks based on preasure.
-        if be_tasks:
-            if ipc < self.ipc_threshold and ipc > 0:
+        if be_tasks and lc_tasks:
+            if mpki > self.mpki_threshold and mpki > 0:
                 allocation = THROTTLE
-                log.info('ipc=%r -> thorttle %s best-effort tasks', ipc, len(be_tasks))
+                log.info('mpki=%r -> thorttle %s best-effort tasks', mpki, len(be_tasks))
             else:
                 allocation = ENABLE
-                log.info('ipc=%r -> enable %s best-effort tasks', ipc, len(be_tasks))
+                log.info('mpki=%r -> enable %s best-effort tasks', mpki, len(be_tasks))
 
             new_allocations = {t: allocation for t in be_tasks}
 
-        return new_allocations, [], [
-            Metric(name='example_allocator_ipc', value=ipc,
+        return new_allocations, anomalies, [
+            Metric(name='example_allocator_mpki', value=mpki,
                    labels=dict(kind='current')),
-            Metric(name='example_allocator_ipc', value=self.ipc_threshold,
+            Metric(name='example_allocator_mpki', value=self.mpki_threshold,
                    labels=dict(kind='threshold')),
         ]

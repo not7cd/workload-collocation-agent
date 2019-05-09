@@ -55,6 +55,8 @@ cpu = os.getenv('cpu', '1')
 ram = os.getenv('ram', '1') + 'Gi'
 disk = os.getenv('disk', '1') + 'Gi'
 
+resource_limits = bool(os.environ.get('resource_limits') or False)
+
 # K8s specific variables:
 pod_namespace = os.getenv('k8s_namespace', 'default')
 pod_naming_types = ('short', 'full')
@@ -107,11 +109,14 @@ securityContext = {
     "runAsUser": 0
 }
 
-limits = {
-    "cpu": cpu,
-    "memory": ram,
-    "ephemeral-storage": disk,
-}
+if resource_limits:
+    limits = {
+        "cpu": cpu,
+        "memory": ram,
+        "ephemeral-storage": disk,
+    }
+else:
+    limits = {}
 
 volumes = [{"name": "shared-data"}]
 initContainers = []

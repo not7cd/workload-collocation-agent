@@ -35,7 +35,9 @@ kubectl get configmap wca-allocator-plugin --namespace wca
 while sleep 1; do kubectl logs -f wca -c wca --namespace wca; done
 
 
-
+###  RESTROT ALL
+kubectl delete configmap wca-allocator-plugin --namespace wca ; kubectl create configmap wca-allocator-plugin --from-file example_allocator.py --namespace wca
+kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
 
 
 # #############################

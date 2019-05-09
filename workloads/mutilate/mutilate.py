@@ -29,6 +29,7 @@ time = int(os.environ.get('time') or 90)
 threads = int(os.environ.get('threads') or 8)
 connections = int(os.environ.get('connections') or 24)
 warmup_time = int(os.environ.get('warmup_time') or 30)
+update_ratio = float(os.environ.get('update_ratio') or 0.1)
 # Tells if scan mode is used
 mutilate_scan = bool(os.environ.get('mutilate_scan') or False)
 # ----------------------------------------------------------------------------------------------------
@@ -47,18 +48,26 @@ initContainers.append(mutilate_warmup_container)
 
 if mutilate_scan:
     mutilate_cmd = """ \"while true; do /mutilate/mutilate -s {}:{} \
-    --scan {}:{}:0 --time={} --update=0.01 --threads={} -c {}; done\" """.format(
-        application_host_ip, communication_port, qps, qps, time, threads, connections)
+    --scan {}:{}:0 --time={} --update={} --threads={} -c {} --warmup 0 --noload; done\" """.format(
+        application_host_ip, communication_port, qps, qps, time, update_ratio, 
+        threads, connections)
+    sli_metric_name = '{application}_scan_read_p{sli_percentile}'.format(
+        application=application,
+        sli_percentile=sli_percentile)
 else:
     mutilate_cmd = """ \"while true; do /mutilate/mutilate -s {}:{} \
-    -Q {} --time={} --update=0.01 --threads={} -c {}; done\" """.format(
-        application_host_ip, communication_port, qps, time, threads, connections)
+    -Q {} --time={} --update={} --threads={} -c {} --warmup 0 --noload; done\" """.format(
+        application_host_ip, communication_port, qps, time, update_ratio, 
+        threads, connections)
+    sli_metric_name = '{application}_read_p{sli_percentile}'.format(
+        application=application,
+        sli_percentile=sli_percentile)
 
 mutilate_run_cmd = """/usr/bin/mutilate_wrapper.pex --command '{mutilate_cmd}' \
 --metric_name_prefix {metric_name_prefix} \
 --stderr 0 --kafka_brokers '{kafka_brokers}' --kafka_topic {kafka_topic} \
 --log_level {log_level} \
---slo {slo} --sli_metric_name {application}_read_p{sli_percentile} \
+--slo {slo} --sli_metric_name {sli_metric_name} \
 --peak_load {peak_load} --load_metric_name {application}_qps \
 --subprocess_shell \
 --labels \"{labels}\"""".format(
@@ -70,7 +79,8 @@ mutilate_run_cmd = """/usr/bin/mutilate_wrapper.pex --command '{mutilate_cmd}' \
     log_level=wrapper_log_level,
     labels=wrapper_labels,
     slo=str(slo), peak_load=qps,
-    sli_percentile=sli_percentile)
+    sli_metric_name=sli_metric_name,
+    )
 
 command.append(mutilate_run_cmd)
 

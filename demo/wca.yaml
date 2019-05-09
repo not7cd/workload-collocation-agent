@@ -60,13 +60,10 @@ data:
 
       # Allocator logic provided as python source code.
       # Requires explict reqistration as command line parameters.
-      # allocator: !ExampleAllocator
+      allocator: !ExampleAllocator
 
-
-      ### Nop allocator
-      #
-
-      allocator: !NOPAllocator
+      ### "No operation" allocator
+      # allocator: !NOPAllocator
 
 
   #
@@ -141,7 +138,7 @@ spec:
         privileged: true
       env:
         - name: LOG
-          value: info
+          value: debug
         # Enable this for python based allocator plugin.
         - name: PEX_INHERIT_PATH
           value: 'true'

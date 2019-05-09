@@ -63,7 +63,7 @@ application_hosts:
     # Global variables to run workloads.
     cluster: example
     role: root
-    image_tag: 9fafa7e01fe7b8c1aca878caee7f89099e3993eb
+    image_tag: 429eb167b485da06f3213d15f934ddd8ad000c06
 
     wrapper_kafka_brokers: 100.64.176.12
     docker_registry: 100.64.176.12:80
@@ -120,18 +120,27 @@ application_hosts:
           slo: 100000
           communication_port: 11211
           twemcache:
-            threads: 1
-            max_memory: 1234
           rpc_perf:
 
 
       twemcache_mutilate:
         default:
+          labels:
+              task_kind: latency-critical
           count: 0
           slo: 3200
           communication_port: 11311
           twemcache:
+            env:
+              worker_threads: 4
           mutilate:
+            env:
+              threads: 56
+              time: 5
+              qps: 1500000
+              connections: 1
+              mutilate_scan: 1
+              update_ratio: 0.
 
 
       specjbb:
@@ -164,11 +173,11 @@ application_hosts:
       stress_ng:
         default:
           labels:
-              task_kind: latency-critical
+              task_kind: best-effort
           count: 1
           timeout: 30
           stressor: stream
-          number_workers: 2
+          number_workers: 100
           resources:
             cpu: 1
             ram: 5
