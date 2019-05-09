@@ -17,10 +17,12 @@ spec:
   containers:
 
     - name: wca
-      image: 100.64.176.12:80/wca:8db3687566f229701b8e45985f176db6bf37b80b
+      image: 100.64.176.12:80/wca:344afd8b0bbb6ce2c0744d5c1d14ba766498c257
+      securityContext:
+        privileged: true
       env:
         - name: LOG
-          value: trace
+          value: wca.containers:trace
         # Example of providing simple python plugin.
         - name: PEX_INHERIT_PATH
           value: 'true'
@@ -41,11 +43,12 @@ spec:
           mountPath: /sys/fs/cgroup/
         - name: resctrl
           mountPath: /sys/fs/resctrl/
-
         # Allocator plugin can be simple python module.
         - name: wca-allocator-plugin
           mountPath: /example_allocator.py
           subPath: example_allocator.py
+        - name: dev-cpu
+          mountPath: /dev/cpu
 
     - name: node-exporter
       image: prom/node-exporter@sha256:ffc3e0adf58771cb2097aa0b074a6fe68b4925ba75c2e1c41f41ae656eebee11
@@ -90,6 +93,9 @@ spec:
     - name: kubeletcert
       hostPath:
         path: /etc/kubernetes/ssl/
+    - name: dev-cpu
+      hostPath:
+        path: /dev/cpu
     #### common
     - name: var-lib-wca
       emptyDir: {}

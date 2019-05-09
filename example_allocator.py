@@ -36,8 +36,8 @@ class ExampleAllocator(Allocator):
         be_tasks = [t for t in labels if labels[t].get('task_kind') == 'best-effort']
         lc_tasks = [t for t in labels if labels[t].get('task_kind') == 'latency-critical']
 
-        log.debug('Found %s latency-critical tasks and %s best-efforts tasks',
-                  len(lc_tasks), len(lc_tasks))
+        log.debug('Found %s latency-critical tasks and %s best-effort tasks',
+                  len(lc_tasks), len(be_tasks))
 
         # Calculate IPC preasure ...
         preasure = 0.

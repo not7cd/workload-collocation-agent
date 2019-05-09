@@ -14,6 +14,10 @@ kubectl delete pod wca --namespace wca
 kubectl apply -f ./manifests_demo/pod.yaml
 kubectl apply -f ./manifests_demo/pod.yaml --overwrite --force
 
+kubectl get pod --namespace wca wca --watch
+
+while sleep 1; do kubectl logs -f wca -c wca --namespace wca; done
+
 kubectl create configmap wca-allocator-plugin --from-file example_allocator.py --namespace wca
 kubectl delete configmap wca-allocator-plugin --namespace wca
 
@@ -26,7 +30,6 @@ kubectl describe pod wca --namespace wca
 kubectl get configmap --namespace wca
 kubectl get pod wca -o wide --namespace wca
 
-while sleep 1; do kubectl logs -f wca -c wca --namespace wca; done
 
 # Run example workloads manually.
 
