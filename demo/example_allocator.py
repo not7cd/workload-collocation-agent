@@ -30,7 +30,12 @@ class ExampleAllocator(Allocator):
     and reacts by throttling best-effort tasks. """
 
     ipc_threshold: float = 1.
-    preasure_threshold: float = 1.
+    enable_delay: int = 5
+
+    def __post_init__(self):
+
+        self.current_state = ENABLE
+        self.current_state_duration = 0
 
     def allocate(self, platform, measurements, resources, labels, allocations):
 
@@ -40,25 +45,38 @@ class ExampleAllocator(Allocator):
         log.debug('Found %s latency-critical tasks and %s best-effort tasks',
                   len(lc_tasks), len(be_tasks))
 
-        # Calculate IPC preasure ...
-        preasure = 0.
+        # Calculate IPC accorss all latency critical tasks...
+        ipc = 0
         for task in lc_tasks:
             if 'ipc' in measurements[task]:
-                ipc = measurements[task]['ipc']
-                if ipc < self.ipc_threshold:
-                    preasure += 1/ipc
+                ipc += measurements[task]['ipc']
 
         new_allocations = {}
         # Thortlle or enable best-efforts tasks based on preasure.
         if be_tasks:
-            if preasure > self.preasure_threshold:
-                allocation = THROTTLE
-                log.info('Preasure=%r -> thorttle %s best-effort tasks', preasure, len(be_tasks))
-            else:
-                allocation = ENABLE
-                log.info('Preasure=%r -> enable %s best-effort tasks', preasure, len(be_tasks))
-            new_allocations = {t: allocation for t in be_tasks}
-        else:
-            new_allocations = {}
+            desired_state = self.current_state
+            if ipc < self.ipc_threshold and ipc > 0:
+               if self.current_state_duration > self.enable_delay:
+                   desired_state = THROTTLE
+                   log.info('ipc=%r -> thorttle %s best-effort tasks', ipc, len(be_tasks))
+            elif self.current_state_duration > self.enable_delay:
+                desired_state = ENABLE
+                log.info('ipc=%r -> enable %s best-effort tasks', ipc, len(be_tasks))
 
-        return new_allocations, [], [Metric(name='total_preasure', value=preasure)]
+            if desired_state != self.current_state:
+                self.current_state = desired_state
+                new_allocations = {t: self.current_state for t in be_tasks}
+                self.current_state_duration = 0
+            else:
+                self.current_state_duration += 1
+
+        return new_allocations, [], [
+            Metric(name='example_allocator_ipc', value=ipc,
+                   labels=dict(kind='current')),
+            Metric(name='example_allocator_ipc', value=self.ipc_threshold,
+                   labels=dict(kind='threshold')),
+            Metric(name='example_allocator_state_duration', value=self.current_state_duration,
+                   labels=dict(kind='current')),
+            Metric(name='example_allocator_state_duration', value=self.enable_delay,
+                   labels=dict(kind='threshold')),
+        ]

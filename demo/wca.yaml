@@ -62,7 +62,6 @@ data:
       # Requires explict reqistration as command line parameters.
       allocator: !ExampleAllocator
         ipc_threshold: 1.5
-        preasure_threshold: 0.5
 
 
   #
@@ -132,7 +131,7 @@ spec:
   containers:
 
     - name: wca
-      image: 100.64.176.12:80/wca:6252af30ca928abbb6cbd35a48722dbb12d6d85b
+      image: 100.64.176.12:80/wca:429eb167b485da06f3213d15f934ddd8ad000c06
       securityContext:
         privileged: true
       env:
