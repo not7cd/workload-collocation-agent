@@ -26,12 +26,19 @@ pipeline {
                 }
             }
         }
-        stage("Build pex files") {
+        stage("Build wca pex files") {
             steps {
                 sh '''
-                  make venv dist
+                  make wca_package
                 '''
-                archiveArtifacts(artifacts: "dist/**")
+            }
+        }
+        stage("Build wrappers pex files") {
+            when {expression{return params.BUILD_IMAGES}}
+            steps {
+                sh '''
+                  make wrapper_package
+                '''
             }
         }
         stage("Build and push WCA Docker image") {
