@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress-ng
+  namespace: workloads
+spec:
+  containers:
+  - args:
+    - stress-ng
+    - -c
+    - "1"
+    image: 100.64.176.12:80/wca/stress_ng:7e0b939cf3a1b2f1a34158290c331f8195118297
+    name: stress-ng
+  nodeSelector:
+    own_ip: 100.64.176.33
+  restartPolicy: Never
+  terminationGracePeriodSeconds: 0
