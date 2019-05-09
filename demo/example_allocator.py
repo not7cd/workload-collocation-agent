@@ -40,13 +40,13 @@ class ExampleAllocator(Allocator):
         log.debug('Found %s latency-critical tasks and %s best-effort tasks',
                   len(lc_tasks), len(be_tasks))
 
-        # Calculate IPC accorss all latency critical tasks...
+        # Check MPKI accorss all latency critical tasks...
         anomalies = []
         mpki = 0
         for task in lc_tasks:
             if 'cache_misses_per_kilo_instructions' in measurements[task]:
                 mpki += measurements[task]['cache_misses_per_kilo_instructions']
-                if mpki < self.mpki_threshold:
+                if mpki > self.mpki_threshold:
                     anomalies.append(
                         ContentionAnomaly(
                             resource=ContendedResource.LLC,
