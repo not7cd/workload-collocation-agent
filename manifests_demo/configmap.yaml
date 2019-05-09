@@ -56,8 +56,21 @@ data:
         cpu_quota: 0.02
         cpu_shares: 2
         rdt:
-          mb: 'MB:0=60'
+          name: best-effort
+          mb: 'MB:0=10;1=10'
+          l3: 'MB:0=1;1=1'
 
+    - name: Dynamic rules loaded from shared file.
+      # Labels selector to apply allocations rules only for specified tasks.
+      labels:
+        task_kind: latency-critical
+      allocations:
+        cpu_quota: 1.
+        cpu_shares: 1000
+        rdt:
+          name: latency-critical
+          mb: 'MB:0=100;1=100'
+          l3: 'MB:0=7ff;1=7ff'
 
   #
   # Example of dummy allocator, that justs returns hello_world metric.

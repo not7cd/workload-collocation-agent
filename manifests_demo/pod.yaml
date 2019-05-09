@@ -17,10 +17,10 @@ spec:
   containers:
 
     - name: wca
-      image: 100.64.176.12:80/owca:fbcc3e13699b14f448c19a03d5a522f5247ac39c
+      image: 100.64.176.12:80/wca:f75f0a395616af84b26a1344667ccda68fe949ad
       env:
         - name: LOG
-          value: info
+          value: trace
         # Example of providing simple python plugin.
         - name: PEX_INHERIT_PATH
           value: 'true'

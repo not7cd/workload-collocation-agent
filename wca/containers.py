@@ -355,7 +355,7 @@ class ContainerManager:
         return container
 
     @profiler.profile_duration('sync_containers_state')
-    def sync_containers_state(self, tasks) -> Dict[Task, ContainerInterface]:
+    def sync_containers_state(self, tasks: List[Task]) -> Dict[Task, ContainerInterface]:
         """Syncs state of ContainerManager with a system by removing orphaned containers,
         and creating containers for newly arrived tasks, and synchronizing containers' state.
 
@@ -382,9 +382,13 @@ class ContainerManager:
                 container_to_cleanup.cleanup()
 
         # Recreate self.containers.
-        self.containers = {task: container
+        # tasks[tasks.index[task] trick will replace existing task instance with
+        # mutated state e.g. labels for Kubernetes
+        self.containers = {tasks[tasks.index[task]]: container
                            for task, container in self.containers.items()
                            if task in tasks}
+
+        log.log(logger.TRACE, 'sync_containers_state: existing_tasks=%r', self.containers.tasks)
 
         if new_tasks:
             log.debug('sync_containers_state: found %d new tasks', len(new_tasks))
