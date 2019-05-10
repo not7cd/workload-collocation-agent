@@ -100,8 +100,12 @@ class Cgroup:
         }
 
     def get_pids(self) -> List[str]:
-        with open(os.path.join(self.cgroup_fullpath, TASKS)) as file:
-            return list(file.read().splitlines())
+        try:
+            with open(os.path.join(self.cgroup_fullpath, TASKS)) as file:
+                return list(file.read().splitlines())
+        except FileNotFoundError:
+            log.debug('Soft warning: cgroup disappeard during sync, ignore it.')
+            return []
 
     def set_shares(self, normalized_shares: float):
         """Store shares normalized values in cgroup files system. For de-normalization,
