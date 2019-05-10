@@ -49,7 +49,7 @@ initContainers.append(mutilate_warmup_container)
 if mutilate_scan:
     mutilate_cmd = """ \"while true; do /mutilate/mutilate -s {}:{} \
     --scan {}:{}:0 --time={} --update={} --threads={} -c {} --warmup 0 --noload; done\" """.format(
-        application_host_ip, communication_port, qps, qps, time, update_ratio, 
+        application_host_ip, communication_port, qps, qps, time, update_ratio,
         threads, connections)
     sli_metric_name = '{application}_scan_read_p{sli_percentile}'.format(
         application=application,
@@ -57,7 +57,7 @@ if mutilate_scan:
 else:
     mutilate_cmd = """ \"while true; do /mutilate/mutilate -s {}:{} \
     -Q {} --time={} --update={} --threads={} -c {} --warmup 0 --noload; done\" """.format(
-        application_host_ip, communication_port, qps, time, update_ratio, 
+        application_host_ip, communication_port, qps, time, update_ratio,
         threads, connections)
     sli_metric_name = '{application}_read_p{sli_percentile}'.format(
         application=application,
