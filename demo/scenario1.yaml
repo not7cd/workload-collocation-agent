@@ -25,8 +25,8 @@ application_hosts:
 
     default_resources:
       cpu: 1
-      ram: 5
-      disk: 3
+      ram: 1
+      disk: 1
 
     workloads:
 
@@ -48,6 +48,10 @@ application_hosts:
               connections: 1
               mutilate_scan: 1
               update_ratio: 0.
+            resources:
+              cpu: 4
+              ram: 20
+              disk: 1
 
       stress_ng:
         default:
@@ -58,6 +62,6 @@ application_hosts:
           stressor: stream
           number_workers: 100
           resources:
-            cpu: 1
-            ram: 5
-            disk: 3
+            cpu: 4
+            ram: 1
+            disk: 1

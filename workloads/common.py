@@ -109,13 +109,17 @@ securityContext = {
     "runAsUser": 0
 }
 
+requests = {
+    "cpu": cpu,
+    "memory": ram,
+    "ephemeral-storage": disk,
+}
+
 if resource_limits:
-    limits = {
-        "cpu": cpu,
-        "memory": ram,
-        "ephemeral-storage": disk,
-    }
+    # Guaranteed
+    limits = requests
 else:
+    # Burstable
     limits = {}
 
 volumes = [{"name": "shared-data"}]
@@ -127,7 +131,7 @@ containers = [
     {
         "name": job_name.replace('_', '-').replace('.', '-'),
         "image": image_name + ":" + image_tag,
-        "resources": {"limits": limits},
+        "resources": {"limits": limits, "requests": requests},
         "securityContext": securityContext,
         "volumeMounts": volumeMounts,
         "command": command,
@@ -158,6 +162,6 @@ pod = {
         "nodeSelector": {
             "own_ip": own_ip
         },
-        "terminationGracePeriodSeconds": 5
+        "terminationGracePeriodSeconds": 1
     }
 }
