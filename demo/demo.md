@@ -19,6 +19,8 @@ kubectl apply -f wca.yaml
 
 kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
 
+kubectl create secret generic kubelet-key-crt --from-file=kubelet-client.crt --from-file=kubelet-client.key --namespace=wca
+
 # Backup
 kubectl delete pod wca --namespace wca
 kubectl describe pod wca --namespace wca

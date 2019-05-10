@@ -27,3 +27,5 @@ run_workloads.retry
 unit_results.xml
 /workloads/.pod_definition__*
 metrics.prom
+/demo/kubelet-client.crt
+/demo/kubelet-client.key
