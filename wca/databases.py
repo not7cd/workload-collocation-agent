@@ -16,6 +16,7 @@ import os
 import string
 import requests
 import json
+import base64
 
 from abc import ABC
 from typing import Optional, List, Union
@@ -29,27 +30,37 @@ class InvalidKey(Exception):
     pass
 
 
+class TimeoutOnAllHosts(Exception):
+    pass
+
+
 class Database(ABC):
 
-    def set(self, key: str, value: bytes):
+    def set(self, key: bytes, value: bytes):
         """Store data at key.
         Set is guarantee value to store data as a whole.
         """
         ...
 
-    def get(self, key: str) -> Optional[bytes]:
+    def get(self, key: bytes) -> Optional[bytes]:
         """Retrieve data from key.
         Returns None if key does not exits.
         """
         ...
 
 
-_VALID_FILENAME_CHARACTERS = "-_.%s%s" % (string.ascii_letters, string.digits)
+_VALID_FILENAME_CHARACTERS = bytes("-_.%s%s" % (string.ascii_letters, string.digits), 'ascii')
 
 
 def _validate_key(key):
+    if not isinstance(key, bytes):
+        raise InvalidKey('Key must be in bytes')
+
+    if not (0 < len(key) <= 255):
+        raise InvalidKey('Max key length is 255 bytes')
+
     for character in key:
-        if character in _VALID_FILENAME_CHARACTERS:
+        if character not in _VALID_FILENAME_CHARACTERS:
             raise InvalidKey()
 
 
@@ -64,17 +75,27 @@ class LocalDatabase(Database):
 
     def set(self, key, value):
         _validate_key(key)
-        full_path = os.path.join(self.directory, key)
-        with open(full_path) as f:
+
+        formatted_key = key.decode('ascii')
+
+        full_path = os.path.join(self.directory, formatted_key)
+
+        with open(full_path, 'wb') as f:
             f.write(value)
 
     def get(self, key):
         _validate_key(key)
-        full_path = os.path.join(self.directory, key)
+
+        formatted_key = key.decode('ascii')
+
+        full_path = os.path.join(self.directory, formatted_key)
+
         if not os.path.exists(full_path):
             return None
-        with open(full_path) as f:
+
+        with open(full_path, 'rb') as f:
             value = f.read()
+
         return value
 
 
@@ -90,13 +111,29 @@ class ZookeeperDatabase(Database):
         self._client.start()
 
     def set(self, key, value):
-        full_path = os.path.join(self.namespace, key)
+        _validate_key(key)
+
+        formatted_key = key.decode('ascii')
+
+        full_path = os.path.join(self.namespace, formatted_key)
+
+        self._client.ensure_path(full_path)
+
         self._client.set(full_path, value)
 
     def get(self, key):
-        full_path = os.path.join(self.namespace, key)
-        data = self._client.get(full_path)
-        return data
+        from kazoo.exceptions import NoNodeError
+        _validate_key(key)
+
+        formatted_key = key.decode('ascii')
+
+        full_path = os.path.join(self.namespace, formatted_key)
+
+        try:
+            data = self._client.get(full_path)
+            return data[0]
+        except NoNodeError:
+            return None
 
 
 @dataclass
@@ -134,26 +171,46 @@ class EtcdDatabase(Database):
 
         return response_data
 
+    def _format_data(self, data):
+        formatted_data = dict()
+
+        for key in data.keys():
+            formatted_data[key] = base64.b64encode(data[key]).decode('ascii')
+
+        return formatted_data
+
     def set(self, key, value):
+        _validate_key(key)
+
         data = {'key': key, 'value': value}
+
+        formatted_data = self._format_data(data)
+
         url = '/kv/put'
 
-        response_data = self._send(url, data)
+        response_data = self._send(url, formatted_data)
 
         if not response_data:
-            raise Exception('EtcdDatabase: Cannot put key "{}": Timeout on all hosts!'.format(key))
+            raise TimeoutOnAllHosts(
+                    'EtcdDatabase: Cannot put key "{}": Timeout on all hosts!'.format(key))
 
     def get(self, key):
+        _validate_key(key)
+
         data = {'key': key}
+
+        formatted_data = self._format_data(data)
+
         url = '/kv/range'
 
-        response_data = self._send(url, data)
+        response_data = self._send(url, formatted_data)
 
         if not response_data:
-            raise Exception('EtcdDatabase: Cannot get key "{}": Timeout on all hosts!'.format(key))
+            raise TimeoutOnAllHosts(
+                    'EtcdDatabase: Cannot get key "{}": Timeout on all hosts!'.format(key))
 
         if 'kvs' in response_data:
             if 'value' in response_data['kvs'][0]:
-                return response_data['kvs'][0]['value']
+                return base64.b64decode(response_data['kvs'][0]['value'])
 
         return None

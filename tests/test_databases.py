@@ -16,7 +16,7 @@ import pytest
 import requests
 from unittest.mock import MagicMock, patch
 
-from wca.databases import EtcdDatabase
+from wca.databases import EtcdDatabase, InvalidKey, _validate_key, TimeoutOnAllHosts
 
 
 @patch('requests.post')
@@ -24,8 +24,8 @@ def test_if_set_raise_exception_if_all_host_timeout(mock_post: MagicMock):
     db = EtcdDatabase(['host_1', 'host_2'])
 
     mock_post.return_value.raise_for_status.side_effect = requests.exceptions.Timeout
-    with pytest.raises(Exception):
-        db.set('key', 'val')
+    with pytest.raises(TimeoutOnAllHosts):
+        db.set(bytes('key', 'ascii'), bytes('val', 'ascii'))
 
     assert mock_post.return_value.raise_for_status.call_count == 2
 
@@ -35,7 +35,13 @@ def test_if_get_raise_exception_if_all_host_timeout(mock_post: MagicMock):
     db = EtcdDatabase(['host_1', 'host_2'])
 
     mock_post.return_value.raise_for_status.side_effect = requests.exceptions.Timeout
-    with pytest.raises(Exception):
-        db.get('key')
+    with pytest.raises(TimeoutOnAllHosts):
+        db.get(bytes('key', 'ascii'))
 
     assert mock_post.return_value.raise_for_status.call_count == 2
+
+
+@pytest.mark.parametrize('key', (0*'\x6f', 256*'\x6f', 255*'\x00'))
+def test_if_raise_exception_when_invalid_key(key):
+    with pytest.raises(InvalidKey):
+        _validate_key(key)
