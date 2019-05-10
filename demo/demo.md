@@ -41,7 +41,7 @@ kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
 
 
 # #############################
-#           Workloads
+# Simple          workloads
 # #############################
 
 # Run example workloads manually.
@@ -61,3 +61,10 @@ kubectl delete -f stress-n2.yaml
 ### Cleanup
 kubectl delete namespaces wca kubecon-demo
 ```
+
+cd ../workloads
+
+ansible-playbook -i run_workloads_inventory.kubecon-demo.yaml run_workloads.yaml --tags clean_jobs
+ansible-playbook -i run_workloads_inventory.kubecon-demo.yaml run_workloads.yaml --tags stress_ng
+ansible-playbook -i run_workloads_inventory.kubecon-demo.yaml run_workloads.yaml --tags twemcache_mutilate
+

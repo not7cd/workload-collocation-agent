@@ -138,7 +138,7 @@ spec:
         privileged: true
       env:
         - name: LOG
-          value: debug
+          value: info
         # Enable this for python based allocator plugin.
         - name: PEX_INHERIT_PATH
           value: 'true'
