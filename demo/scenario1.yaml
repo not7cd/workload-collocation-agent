@@ -1,0 +1,63 @@
+application_hosts:
+  hosts:
+    100.64.176.33:
+      env_uniq_id: 33
+      load_generator_host_ip: 100.64.176.34
+      orchestrator: "Kubernetes"
+
+  vars:
+    # Variables for setting ansible.
+    ansible_connection: local
+    ansible_ssh_user: root
+    ansible_user: root
+
+    # Global variables to run workloads.
+    cluster: example
+    role: root
+    image_tag: 429eb167b485da06f3213d15f934ddd8ad000c06
+
+    wrapper_kafka_brokers: 100.64.176.12
+    docker_registry: 100.64.176.12:80
+
+    orchestrator: "Kubernetes"
+    k8s_namespace: "workloads"
+    k8s_pod_naming: "short" 
+
+    default_resources:
+      cpu: 1
+      ram: 5
+      disk: 3
+
+    workloads:
+
+      twemcache_mutilate:
+        default:
+          labels:
+              task_kind: latency-critical
+          count: 1
+          slo: 3200
+          communication_port: 11311
+          twemcache:
+            env:
+              worker_threads: 4
+          mutilate:
+            env:
+              threads: 56
+              time: 5
+              qps: 1500000
+              connections: 1
+              mutilate_scan: 1
+              update_ratio: 0.
+
+      stress_ng:
+        default:
+          labels:
+              task_kind: best-effort
+          count: 1
+          timeout: 3600
+          stressor: stream
+          number_workers: 100
+          resources:
+            cpu: 1
+            ram: 5
+            disk: 3

@@ -62,9 +62,7 @@ kubectl delete -f stress-n2.yaml
 kubectl delete namespaces wca kubecon-demo
 ```
 
-cd ../workloads
-
-ansible-playbook -i run_workloads_inventory.kubecon-demo.yaml run_workloads.yaml --tags clean_jobs
-ansible-playbook -i run_workloads_inventory.kubecon-demo.yaml run_workloads.yaml --tags stress_ng
-ansible-playbook -i run_workloads_inventory.kubecon-demo.yaml run_workloads.yaml --tags twemcache_mutilate
+ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags clean_jobs
+ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags stress_ng
+ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags twemcache_mutilate
 
