@@ -152,8 +152,8 @@ data:
       node: !KubernetesNode
         # We support two options: cgroupfs, systemd.
         cgroup_driver: cgroupfs
-        client_private_key: "/etc/kubernetes/ssl/kubelet-client.key"
-        client_cert: "/etc/kubernetes/ssl/kubelet-client.crt"
+        client_private_key: "/etc/kubernetes/kubelet-client.key"
+        client_cert: "/etc/kubernetes/kubelet-client.crt"
         kubelet_endpoint: "https://100.64.176.33:10250" 
         monitored_namespaces: ["workloads"]
       extra_labels:

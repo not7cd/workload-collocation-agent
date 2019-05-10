@@ -19,8 +19,6 @@ kubectl apply -f wca.yaml
 
 kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
 
-kubectl create secret generic kubelet-key-crt --from-file=kubelet-client.crt --from-file=kubelet-client.key --namespace=wca
-
 # Backup
 kubectl delete pod wca --namespace wca
 kubectl describe pod wca --namespace wca
@@ -29,6 +27,9 @@ kubectl get pod wca -o wide --namespace wca
 
 ## Deploy WCA allocator python-based plugin as configmap
 kubectl delete configmap wca-allocator-plugin --namespace wca ; kubectl create configmap wca-allocator-plugin --from-file example_allocator.py --namespace wca
+
+## Create secret
+kubectl create secret generic kubelet-key-crt --from-file=kubelet-client.crt --from-file=kubelet-client.key --namespace=wca
 
 kubectl get configmap wca-allocator-plugin --namespace wca
 
