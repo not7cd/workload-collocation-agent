@@ -26,7 +26,7 @@ spec:
         privileged: true
       env:
         - name: LOG
-          value: info
+          value: debug
         ### 2. Enable this for python dummy hello world allocator plugin.
         # - name: PEX_INHERIT_PATH
         #   value: 'true'
@@ -37,12 +37,12 @@ spec:
         # - name: EXTRA_OPTIONS
         #   value: '--log hello_world_allocator:debug'
         ### 3. Enable this for python based allocator plugin.
-        - name: PYTHONPATH
-          value: /
-        - name: EXTRA_COMPONENT
-          value: example_allocator:ExampleAllocator
-        - name: EXTRA_OPTIONS
-          value: '--log example_allocator:debug'
+        # - name: PYTHONPATH
+        #   value: /
+        # - name: EXTRA_COMPONENT
+        #   value: example_allocator:ExampleAllocator
+        # - name: EXTRA_OPTIONS
+        #   value: '--log example_allocator:debug'
       volumeMounts:
         - name: kubelet-key-crt
           mountPath: /etc/kubernetes/
@@ -57,9 +57,9 @@ spec:
         - name: dev-cpu
           mountPath: /dev/cpu
         ### 3. this for python-based allocator plugin.
-        - name: wca-allocator-plugin
-          mountPath: /example_allocator.py
-          subPath: example_allocator.py
+        # - name: wca-allocator-plugin
+        #   mountPath: /example_allocator.py
+        #   subPath: example_allocator.py
 
     - name: node-exporter
       image: prom/node-exporter@sha256:ffc3e0adf58771cb2097aa0b074a6fe68b4925ba75c2e1c41f41ae656eebee11
@@ -107,9 +107,9 @@ spec:
     - name: var-lib-wca
       emptyDir: {}
     ### 3. ENABLE this for python-based plugin
-    - name: wca-allocator-plugin
-      configMap:
-        name: wca-allocator-plugin
+    # - name: wca-allocator-plugin
+    #   configMap:
+    #     name: wca-allocator-plugin
     
     #### node_exporter volumes
     - name: proc
@@ -165,15 +165,15 @@ data:
         output_filename: /var/lib/wca/allocations.prom
 
       ### 1. Static allocator
-      # allocator: !StaticAllocator
-      #   rules: 
-      #   - name: Default rule for all tasks.
-      #     allocations:
-      #       cpu_quota: 1.
-      #       rdt:
-      #         name: ''
-      #   # Alternate way to provide allocations rules.
-      #   config: "/etc/wca/static_allocator.yml"
+      allocator: !StaticAllocator
+        rules: 
+        - name: Default rule for all tasks.
+          allocations:
+            cpu_quota: 1.
+            rdt:
+              name: ''
+        # Alternate way to provide allocations rules.
+        config: "/etc/wca/static_allocator.yml"
 
       #
       ### 2. Hello World Allocator
@@ -181,37 +181,37 @@ data:
       # allocator: !HelloWorldAllocator
 
       ### 3. Example Allocator
-      allocator: !ExampleAllocator
-        threshold: 0.6
+      # allocator: !ExampleAllocator
+      #   threshold: 0.6
 
 
 
   #
   # 1. Example of configuring of built-in rules based allocator.
   # 
-  # static_allocator.yml: |
-  #
-  #   - name: Best-effort rule from static file.
-  #     # Labels selector to apply allocations rules only for specified tasks.
-  #     labels:
-  #       task_kind: best-effort
-  #     allocations:
-  #       cpu_quota: 0.01
-  #       rdt:
-  #         name: best-effort
-  #         mb: 'MB:0=10;1=10'
-  #         l3: 'L3:0=1;1=1'
-  #
-  #   - name: Latency-critical rule from static-file.
-  #     # Labels selector to apply allocations rules only for specified tasks.
-  #     labels:
-  #       task_kind: latency-critical
-  #     allocations:
-  #       cpu_quota: 1.
-  #       rdt:
-  #         name: latency-critical
-  #         mb: 'MB:0=100;1=100'
-  #         l3: 'L3:0=7ff;1=7ff'
+  static_allocator.yml: |
+
+    - name: Best-effort rule from static file.
+      # Labels selector to apply allocations rules only for specified tasks.
+      labels:
+        task_kind: best-effort
+      allocations:
+        cpu_quota: 0.01
+        rdt:
+          name: best-effort
+          mb: 'MB:0=10;1=10'
+          l3: 'L3:0=1;1=1'
+
+    - name: Latency-critical rule from static-file.
+      # Labels selector to apply allocations rules only for specified tasks.
+      labels:
+        task_kind: latency-critical
+      allocations:
+        cpu_quota: 1.
+        rdt:
+          name: latency-critical
+          mb: 'MB:0=100;1=100'
+          l3: 'L3:0=7ff;1=7ff'
 
   #
   # 2. Example of dummy allocator, that justs returns hello_world metric.

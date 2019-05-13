@@ -15,12 +15,25 @@ kubectl get all -n workloads
 
 clear
 
+# ENABLE 1 config
 # ENABLE LOGS
 # DISABLE OTHER SCeNARIONS
+# COMMIT
+
+
+
+
 
 # ########################################
 # Part 1 - installation and basic features
 # ########################################
+
+
+
+
+# Kubernetes setups
+kubectl get nodes -owide
+
 
 
 # Create "wca" namespace and secret
@@ -39,19 +52,19 @@ kubectl -n wca describe pod wca
 
 
 
-# Watch WCA logs
+# Watch WCA logs (window on the right)
 while sleep 1; do kubectl logs -n wca -f wca -c wca; done
 
 
 
-# Check that metrics are saved/exported properly.
+# Check that metrics are exported properly.
 clear
 kubectl exec -n wca wca -c wca -- cat /var/lib/wca/anomalies.prom
 curl -s 100.64.176.34:9100/metrics | grep wca_tasks
 
 
 
-# Deploy simple synthetic workload "stress"
+# Deploy simple synthetic workload "stress".
 clear
 kubectl create namespace workloads
 kubectl create -f stress1.yaml
@@ -60,13 +73,13 @@ kubectl get pods
 
 
 
-# Edit Pod labels to reclassify pod as "best-effort".
+# Edit "stress1" pod labels to reclassify pod as "best-effort".
 kubectl edit pod stress1
 
 
 
 
-# Low level CPU/RDT resources are properly configured
+# Show that low level CPU/RDT resources are properly configured.
 clear
 ssh 100.64.176.34 'head /sys/fs/cgroup/cpu/kubepods/besteffort/*/cpu.cfs_quota_us'
 ssh 100.64.176.34 'ls -1 /sys/fs/resctrl/'
@@ -78,7 +91,7 @@ ssh 100.64.176.34 'head /sys/fs/resctrl/best-effort/mon_groups/*/mon_data/mon_L3
 kubectl -n wca edit configmap wca-config
 
 
-# Check Low level CPU/RDT resources are properly reconfigured
+# Check Low level CPU/RDT resources are properly reconfigured.
 clear
 ssh 100.64.176.34 'head /sys/fs/cgroup/cpu/kubepods/besteffort/*/cpu.cfs_quota_us'
 ssh 100.64.176.34 'ls -1 /sys/fs/resctrl/'
@@ -89,7 +102,7 @@ ssh 100.64.176.34 'head /sys/fs/resctrl/best-effort/mon_groups/*/mon_data/mon_L3
 kubectl create -f stress2.yaml
 kubectl get pods 
 
-# Check Low level CPU/RDT resources are properly reconfigured for both pods
+# Check Low level CPU/RDT resources are properly reconfigured for another pod.
 clear
 ssh 100.64.176.34 'head /sys/fs/cgroup/cpu/kubepods/burstable/*/cpu.cfs_quota_us'
 ssh 100.64.176.34 'ls -1 /sys/fs/resctrl/'
@@ -97,52 +110,60 @@ ssh 100.64.176.34 'cat /sys/fs/resctrl/latency-critical/schemata'
 ssh 100.64.176.34 'head /sys/fs/resctrl/latency-critical/mon_groups/*/mon_data/mon_L3_00/*'
 
 # If resgroup name is not specified it would get default based on pod name.
-# Edit the rules first to remove "name" for resgroups.
+# Edit the rules first to remove "name" for RDTAllocation.
 kubectl -n wca edit configmap wca-config
 clear
+
+# Each pods get now own resctrl group.
 ssh 100.64.176.34 'ls -1 /sys/fs/resctrl/'
 
 
 
-### Replace static allocator with "hello world" and info logging level.
+### Replace static allocator with "hello world" (and change to log level to info).
 # Recreate WCA pod with new configuration.
 vi wca.yaml
 kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
+
+# Let's see that new metrics is exposed.
 curl -s 100.64.176.34:9100/metrics | grep hello_world
 
 
 
 
-# Show metrics collected by WCA in Prometheus http://100.64.176.12:9090
+# Show metrics collected by WCA in Prometheus http://100.64.176.12:9090.
 
 
 
 
-# ###################################
-# Part 2 - working example
-# ###################################
-# Delete existing pods and run scenario1
+# ########################################################
+# Part 2 - working example of allocator for real workload
+# ########################################################
+
+
+# Delete existing pods.
 kubectl delete pods --all
+kubectl get pods
 
 
 
 
-# Deploy WCA allocator python-based plugin as configmap
+# Deploy WCA allocator python-based plugin as configmap.
 vi example_allocator.py
 kubectl delete configmap wca-allocator-plugin -n wca ; kubectl create configmap wca-allocator-plugin --from-file example_allocator.py -n wca
 
 
 
 
-# Reconfigure WCA to use python based plugin ("3." configuration)
+# Reconfigure WCA to use python based plugin (third configuration)
 vi wca.yaml
+# Redeploy wca with new config.
 kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
 
 
 
 
 
-# Run real workload (memcache fork with mutilate load generator)
+# Run real workload (memcached fork with mutilate as load generator)
 kubectl create namespace workloads
 vi scenario1.yaml
 ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags twemcache_mutilate
@@ -151,8 +172,6 @@ kubectl get pods
 
 
 
-# Observer performance characteristic of latency-critical workload running alone.
-http://100.64.176.12:9090 
 
 
 
@@ -171,24 +190,35 @@ eubectl get pod 34--twemcache-mutilate-default--mutilate--11311-0 -ojson | jq .
 
 
 
-# Run best-effort tasks causing the interference and how WCA deals with it)
+# Observer performance characteristic of latency-critical workload running alone.
+# in Grafana
+http://100.64.176.12:3000 
+
+
+
+
+
+# Run best-effort task causing the interference.
 ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags stress_ng
 kubectl get pods
 
 
 
 
-# Observer impact of best-effort on cache misses ration and application performance (Prometheus/Grafana)
-http://100.64.176.12:9090 
-
-
-# Open Prometheus to additional metrics
-
+# Observe impact of best-effort on IPC metric and application performance (Grafana)
 http://100.64.176.12:3000/d/L0bI_XmWk/kubecon-demo-2019
 
 
-# Reclassify stress-ng as best-effort to enable WCA control.
+
+
+
+# Reclassify stress-ng as best-effort to enable WCA control over "best-effort" task.
 kubectl edit pod 34--stress-ng-default--0
+
+
+
+# The negative effect of running "best-effort" job should disappear.
+http://100.64.176.12:3000/d/L0bI_XmWk/kubecon-demo-2019
 
 
 
@@ -198,10 +228,7 @@ kubectl delete pod 34--stress-ng-default--0
 
 
 
-
-# Open Prometheus/Grafana
-http://100.64.176.12:3000/d/L0bI_XmWk/kubecon-demo-2019
-
-
-
+# ################################################
+# THE END
+# ################################################
 
