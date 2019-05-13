@@ -39,7 +39,7 @@ while sleep 1; do kubectl logs -n wca -f wca -c wca; done
 # Check that metrics are saved/exported properly.
 clear
 kubectl exec -n wca wca -c wca -- cat /var/lib/wca/anomalies.prom
-curl -s 100.64.176.33:9100/metrics | grep wca_tasks
+curl -s 100.64.176.34:9100/metrics | grep wca_tasks
 
 
 
@@ -52,10 +52,10 @@ kubectl get pods
 # Low level CPU/RDT resources are properly configured
 
 clear
-ssh 100.64.176.33 'head /sys/fs/cgroup/cpu/kubepods/besteffort/*/cpu.cfs_quota_us'
-ssh 100.64.176.33 'ls -1 /sys/fs/resctrl/'
-ssh 100.64.176.33 'cat /sys/fs/resctrl/best-effort/schemata'
-ssh 100.64.176.33 'head /sys/fs/resctrl/best-effort/mon_groups/*/mon_data/mon_L3_00/*'
+ssh 100.64.176.34 'head /sys/fs/cgroup/cpu/kubepods/besteffort/*/cpu.cfs_quota_us'
+ssh 100.64.176.34 'ls -1 /sys/fs/resctrl/'
+ssh 100.64.176.34 'cat /sys/fs/resctrl/best-effort/schemata'
+ssh 100.64.176.34 'head /sys/fs/resctrl/best-effort/mon_groups/*/mon_data/mon_L3_00/*'
 
 
 # Edit Pod labels to reclassify pod as best-effort.
@@ -78,7 +78,7 @@ kubectl get pods
 # Recreate WCA pod with new configuration.
 vi wca.yaml
 kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
-curl -s 100.64.176.33:9100/metrics | grep hello_world
+curl -s 100.64.176.34:9100/metrics | grep hello_world
 open http://100.64.176.12:9090
 
 # ###################################
@@ -113,6 +113,7 @@ http://100.64.176.12:9090
 
 # Delete the aggressor obeserve that performance goes back to normal
 kubectl delete pod 33--stress-ng-default--0
+kubectl edit pod 33--stress-ng-default--0
 
 # Open Prometheus/Grafana
 http://100.64.176.12:3000/d/L0bI_XmWk/kubecon-demo-2019

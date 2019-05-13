@@ -7,7 +7,7 @@ metadata:
     task_kind: latency-critical
 spec:
   nodeSelector:
-    own_ip: 100.64.176.33
+    own_ip: 100.64.176.34
   containers:
   - args: ["stress-ng", "--cpu", "1"]
     image: 100.64.176.12:80/wca/stress_ng:7e0b939cf3a1b2f1a34158290c331f8195118297

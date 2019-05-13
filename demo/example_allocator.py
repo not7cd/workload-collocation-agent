@@ -10,8 +10,8 @@ THROTTLE = dict(
     cpu_quota=0.05,
     rdt=RDTAllocation(
         name='best-effort',
-        l3='L3:0=003;1=003',
-        mb='MB:0=5;1=5'
+        l3='L3:0=001;1=001',
+        mb='MB:0=10;1=10'
     )
 )
 
@@ -65,13 +65,13 @@ class ExampleAllocator(Allocator):
             if mpki > self.mpki_threshold and mpki > 0:
                 allocation = THROTTLE
                 log.info('mpki=%r -> thorttle %s best-effort tasks', mpki, len(be_tasks))
-                self._steady_duration = 3
+                self._steady_duration = 5
             else:
                 self._steady_duration -= 1
                 if self._steady_duration == 0:
                     allocation = ENABLE
                     log.info('mpki=%r -> enable %s best-effort tasks', mpki, len(be_tasks))
-                    self._steady_duration = 3
+                    self._steady_duration = 5
                 else:
                     allocation = THROTTLE
 
