@@ -105,13 +105,18 @@ kubectl get pods
 # Latency-critical pod
 kubectl get pod 33--twemcache-mutilate-default--twemcache--11311-0 -ojson | jq .
 
-# Observer impact of best-effort on cache misses ration and application performance.
+# Latency-critical workload - load generator
+kubectl get pod 33--twemcache-mutilate-default--mutilate--11311-0 -ojson | jq .
 
+# Observer impact of best-effort on cache misses ration and application performance (Prometheus/Grafana)
+http://100.64.176.12:9090 
 
-# Delete the aggressor
+# Delete the aggressor obeserve that performance goes back to normal
 kubectl delete pod 33--stress-ng-default--0
 
-# O
+# Open Prometheus/Grafana
+http://100.64.176.12:3000/d/L0bI_XmWk/kubecon-demo-2019
+
 
 # Deploy WCA allocator python-based plugin as configmap
 vi example_allocator.py
@@ -120,33 +125,5 @@ kubectl delete configmap wca-allocator-plugin -n wca ; kubectl create configmap 
 # Reconfigure WCA to use python based plugin (3. scenario)
 vi wca.yaml
 kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
-kubectl get configmap wca-allocator-plugin -n wca
 
 
-
-# ##################################################################
-# Deploy simple workloads and demonstrate WCA rule based allocation
-# ##################################################################
-
-# Run example workloads manually.
-kubectl create namespace workloads
-kubectl config set-context --current --namespace workloads
-kubectl create -f stress-ng1.yaml
-kubectl create -f stress-ng2-lc.yaml
-kubectl get pods
-kubectl get pods stress-ng1
-kubectl get pods stress-ng2
-
-kubectl delete -f stress-n1.yaml
-kubectl delete -f stress-n2.yaml
-
-### Run collocation scenario using ansible.
-
-### Cleanup
-kubectl delete namespaces wca kubecon-demo
-```
-ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml
-
-ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags clean_jobs
-ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags stress_ng
-ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags twemcache_mutilate

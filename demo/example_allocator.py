@@ -7,11 +7,11 @@ log = logging.getLogger(__name__)
 
 # Predefined resources configuration.
 THROTTLE = dict(
-    cpu_quota=0.1,
+    cpu_quota=0.05,
     rdt=RDTAllocation(
         name='best-effort',
-        l3='L3:0=002;1=002',
-        mb='MB:0=10;1=10'
+        l3='L3:0=003;1=003',
+        mb='MB:0=5;1=5'
     )
 )
 
@@ -31,6 +31,7 @@ class ExampleAllocator(Allocator):
     latency-critical tasks, and reacts by throttling best-effort tasks. """
 
     mpki_threshold: float = 1.
+    _steady_duration: int = 3
 
     def allocate(self, platform, measurements, resources, labels, allocations):
 
@@ -64,9 +65,15 @@ class ExampleAllocator(Allocator):
             if mpki > self.mpki_threshold and mpki > 0:
                 allocation = THROTTLE
                 log.info('mpki=%r -> thorttle %s best-effort tasks', mpki, len(be_tasks))
+                self._steady_duration = 3
             else:
-                allocation = ENABLE
-                log.info('mpki=%r -> enable %s best-effort tasks', mpki, len(be_tasks))
+                self._steady_duration -= 1
+                if self._steady_duration == 0:
+                    allocation = ENABLE
+                    log.info('mpki=%r -> enable %s best-effort tasks', mpki, len(be_tasks))
+                    self._steady_duration = 3
+                else:
+                    allocation = THROTTLE
 
             new_allocations = {t: allocation for t in be_tasks}
 

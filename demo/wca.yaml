@@ -28,7 +28,7 @@ spec:
   containers:
 
     - name: wca
-      image: 100.64.176.12:80/wca:e2416dfd858998bebc8794be5ff8bf1c227f4892
+      image: 100.64.176.12:80/wca:460ede361e19c8963e11a6706f5abc6ac0b4c7b7
       securityContext:
         privileged: true
       env:
@@ -188,10 +188,9 @@ data:
       # allocator: !HelloWorldAllocator
 
       # ### 3. "No operation" allocator
-      allocator: !NOPAllocator
-
-      # ### 3. Example Allocator
-      # allocator: !ExampleAllocator
+      # allocator: !NOPAllocator
+      ### 3. Example Allocator
+      allocator: !ExampleAllocator
 
 
   #
@@ -224,14 +223,14 @@ data:
   #
   # 2. Example of dummy allocator, that justs returns hello_world metric.
   # 
-  hello_world_allocator.py: |
-    import logging
-    log = logging.getLogger(__name__)
-    from wca.metrics import Metric
-    from wca.allocators import Allocator
-    class HelloWorldAllocator(Allocator):
-        def allocate(self, *args):
-            log.debug('Hello world!')
-            return {}, [], [Metric('hello_world', 1)]
+  # hello_world_allocator.py: |
+  #   import logging
+  #   log = logging.getLogger(__name__)
+  #   from wca.metrics import Metric
+  #   from wca.allocators import Allocator
+  #   class HelloWorldAllocator(Allocator):
+  #       def allocate(self, *args):
+  #           log.debug('Hello world!')
+  #           return {}, [], [Metric('hello_world', 1)]
 
 
