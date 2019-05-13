@@ -5,9 +5,9 @@ import logging
 log = logging.getLogger(__name__)
 
 
-# Predefined resources configuration.
+# Predefined resources configuration for best-efforts tasks.
 THROTTLE = dict(
-    cpu_quota=0.05,
+    cpu_quota=0.01,
     rdt=RDTAllocation(
         name='best-effort',
         l3='L3:0=001;1=001',
@@ -27,10 +27,11 @@ ENABLE = dict(
 
 @dataclass
 class ExampleAllocator(Allocator):
-    """Simple allocator that watches over MPKI (cache misses per kilo instruction) of
-    latency-critical tasks, and reacts by throttling best-effort tasks. """
+    """Simple allocator that monitors some metric (defaults to cache misses per kilo instruction) 
+    for latency-critical tasks, and reacts by throttling best-effort tasks. """
 
-    mpki_threshold: float = 1.
+    threshold: float = 1.
+    metric_name: str = 'ipc'
     _steady_duration: int = 3
 
     def allocate(self, platform, measurements, resources, labels, allocations):
@@ -41,45 +42,51 @@ class ExampleAllocator(Allocator):
         log.debug('Found %s latency-critical tasks and %s best-effort tasks',
                   len(lc_tasks), len(be_tasks))
 
-        # Check MPKI accorss all latency critical tasks...
+        # Check value of metric accords all latency critical tasks...
         anomalies = []
-        mpki = 0
+        value = 0
         for task in lc_tasks:
-            if 'cache_misses_per_kilo_instructions' in measurements[task]:
-                mpki += measurements[task]['cache_misses_per_kilo_instructions']
-                if mpki > self.mpki_threshold:
+            if self.metric_name in measurements[task]:
+                value += measurements[task][self.metric_name]
+                if value < self.threshold:
+                    # Return information about found resource contention caused anomaly.
                     anomalies.append(
                         ContentionAnomaly(
                             resource=ContendedResource.LLC,
                             contended_task_id=task,
                             contending_task_ids=be_tasks,
                             metrics=[
-                                Metric(name='lc_mpki', value=mpki)
+                                Metric(name='lc_value', value=value)
                             ]
                         )
                     )
 
+        # Throttle or enable best-efforts tasks based on number of cache misses.
         new_allocations = {}
-        # Thortlle or enable best-efforts tasks based on preasure.
         if be_tasks and lc_tasks:
-            if mpki > self.mpki_threshold and mpki > 0:
-                allocation = THROTTLE
-                log.info('mpki=%r -> thorttle %s best-effort tasks', mpki, len(be_tasks))
-                self._steady_duration = 5
-            else:
-                self._steady_duration -= 1
-                if self._steady_duration == 0:
-                    allocation = ENABLE
-                    log.info('mpki=%r -> enable %s best-effort tasks', mpki, len(be_tasks))
+            if value > 0:
+                if value < self.threshold:
+                    allocation = THROTTLE
+                    log.info('value of %r=%r -> throttle %s best-effort tasks', 
+                             self.metric_name, value, len(be_tasks))
                     self._steady_duration = 5
                 else:
-                    allocation = THROTTLE
+                    self._steady_duration -= 1
+                    # Enable only if steady state for at least 5 rounds.
+                    if self._steady_duration == 0:
+                        allocation = ENABLE
+                        log.info('value of %r=%r -> enable %s best-effort tasks', 
+                                 self.metric_name, value, len(be_tasks))
+                        self._steady_duration = 5
+                    else:
+                        allocation = THROTTLE
 
-            new_allocations = {t: allocation for t in be_tasks}
+                new_allocations = {t: allocation for t in be_tasks}
 
+        # Return additional metrics to debug internals of example allocator.
         return new_allocations, anomalies, [
-            Metric(name='example_allocator_mpki', value=mpki,
+            Metric(name='example_allocator_value', value=value,
                    labels=dict(kind='current')),
-            Metric(name='example_allocator_mpki', value=self.mpki_threshold,
+            Metric(name='example_allocator_value', value=self.threshold,
                    labels=dict(kind='threshold')),
         ]

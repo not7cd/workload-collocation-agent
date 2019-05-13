@@ -1,10 +1,3 @@
-kind: Namespace 
-apiVersion: v1 
-metadata:
-    name: wca
-
----
-
 ##########################################
 # WCA pod
 ##########################################
@@ -187,10 +180,10 @@ data:
       #
       # allocator: !HelloWorldAllocator
 
-      # ### 3. "No operation" allocator
-      # allocator: !NOPAllocator
       ### 3. Example Allocator
       allocator: !ExampleAllocator
+        threshold: 0.6
+
 
 
   #
@@ -203,7 +196,7 @@ data:
   #     labels:
   #       task_kind: best-effort
   #     allocations:
-  #       cpu_quota: 0.02
+  #       cpu_quota: 0.01
   #       rdt:
   #         name: best-effort
   #         mb: 'MB:0=10;1=10'
@@ -232,5 +225,5 @@ data:
   #       def allocate(self, *args):
   #           log.debug('Hello world!')
   #           return {}, [], [Metric('hello_world', 1)]
-
+  #
 

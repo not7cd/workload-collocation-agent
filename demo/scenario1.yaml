@@ -51,8 +51,9 @@ application_hosts:
 
       stress_ng:
         default:
-          # labels:
-          #     task_kind: best-effort
+          # Will be enabled manually for demo purposes.
+          labels:
+              task_kind: ''
           count: 1
           timeout: 3600
           stressor: stream
