@@ -2,7 +2,7 @@
 WCA - Workload Collocation Agent
 =====================================================
 
-.. image:: https://travis-ci.com/intel/wca.svg?branch=master
+.. image:: https://travis-ci.com/intel/workload-collocation-agent.svg?branch=master
     :target: https://travis-ci.com/intel/workload-collocation-agent
 
 .. contents:: Table of Contents
