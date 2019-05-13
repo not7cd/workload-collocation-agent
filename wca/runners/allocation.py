@@ -115,6 +115,8 @@ class TasksAllocationsValues(AllocationsDict):
             registry[AllocationType.RDT] = rdt_allocation_value_constructor
 
         task_id_to_containers = {task.task_id: container for task, container in containers.items()}
+        task_id_to_labels = {task.task_id: task.labels for task, container in containers.items()}
+
         simple_dict = {}
         for task_id, task_allocations in tasks_allocations.items():
             if task_id not in task_id_to_containers:
@@ -123,9 +125,10 @@ class TasksAllocationsValues(AllocationsDict):
                 container = task_id_to_containers[task_id]
                 # Check consistency of container with RDT state.
                 assert (container._rdt_information is not None) == rdt_enabled
-                container_labels = dict(container_name=container.get_name(), task=task_id)
+                extra_labels = dict(container_name=container.get_name(), task=task_id)
+                extra_labels.update(task_id_to_labels[task_id])
                 allocation_value = TaskAllocationsValues.create(
-                    task_allocations, container, registry, container_labels)
+                    task_allocations, container, registry, extra_labels)
                 allocation_value.validate()
                 simple_dict[task_id] = allocation_value
 

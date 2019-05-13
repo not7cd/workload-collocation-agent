@@ -17,8 +17,6 @@ metadata:
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "9100"
-  labels:
-    version: '2'
 spec:
   hostPID: true
   hostIPC: true
@@ -36,13 +34,16 @@ spec:
       env:
         - name: LOG
           value: info
-        # Enable this for python based allocator plugin.
-        - name: PEX_INHERIT_PATH
-          value: 'true'
+        ### 2. Enable this for python dummy hello world allocator plugin.
+        # - name: PEX_INHERIT_PATH
+        #   value: 'true'
         # - name: PYTHONPATH
         #   value: /etc/wca/
         # - name: EXTRA_COMPONENT
-        #   value: dummy_allocator:DummyAllocator
+        #   value: hello_world_allocator:HelloWorldAllocator
+        # - name: EXTRA_OPTIONS
+        #   value: '--log hello_world_allocator:debug'
+        ### 3. Enable this for python based allocator plugin.
         - name: PYTHONPATH
           value: /
         - name: EXTRA_COMPONENT
@@ -62,7 +63,7 @@ spec:
           mountPath: /sys/fs/resctrl/
         - name: dev-cpu
           mountPath: /dev/cpu
-        ### ENABLE this for python-based allocator plugin.
+        ### 3. this for python-based allocator plugin.
         - name: wca-allocator-plugin
           mountPath: /example_allocator.py
           subPath: example_allocator.py
@@ -94,7 +95,7 @@ spec:
           mountPath: /rootfs
 
   volumes:
-    #### Workload Collocation Agent volumes
+    ### Workload Collocation Agent volumes
     - name: wca-config
       configMap:
         name: wca-config
@@ -112,7 +113,7 @@ spec:
         path: /dev/cpu
     - name: var-lib-wca
       emptyDir: {}
-    ### ENABLE this for python-based plugin
+    ### 3. ENABLE this for python-based plugin
     - name: wca-allocator-plugin
       configMap:
         name: wca-allocator-plugin
@@ -156,6 +157,7 @@ data:
         client_cert: "/etc/kubernetes/kubelet-client.crt"
         kubelet_endpoint: "https://100.64.176.33:10250" 
         monitored_namespaces: ["workloads"]
+        
       extra_labels:
         env_uniq_id: '33'
         own_ip: '100.64.176.33'
@@ -169,68 +171,67 @@ data:
         overwrite: True
         output_filename: /var/lib/wca/allocations.prom
 
-      # ### Static allocator
+      ### 1. Static allocator
       # allocator: !StaticAllocator
       #   rules: 
       #   - name: Default rule for all tasks.
       #     allocations:
       #       cpu_quota: 1.
-      #       cpu_shares: 10
       #       rdt:
       #         name: ''
       #   # Alternate way to provide allocations rules.
       #   config: "/etc/wca/static_allocator.yml"
 
       #
-      # ### Dummy allocator
+      ### 2. Hello World Allocator
       #
-      # allocator: !DummyAllocator
+      # allocator: !HelloWorldAllocator
 
-      # Allocator logic provided as python source code.
-      # Requires explict reqistration as command line parameters.
-      allocator: !ExampleAllocator
+      # ### 3. "No operation" allocator
+      allocator: !NOPAllocator
 
-      ### "No operation" allocator
-      # allocator: !NOPAllocator
+      # ### 3. Example Allocator
+      # allocator: !ExampleAllocator
 
-
-  #
-  # Example of configuring of built-in rules based allocator.
-  # 
-  static_allocator.yml: |
-
-    - name: Best-effort rule from static file.
-      # Labels selector to apply allocations rules only for specified tasks.
-      labels:
-        task_kind: best-effort
-      allocations:
-        cpu_quota: 0.02
-        cpu_shares: 2
-        rdt:
-          name: best-effort
-          mb: 'MB:0=10;1=10'
-          l3: 'L3:0=1;1=1'
-
-    - name: Latency-critical rule from static-file.
-      # Labels selector to apply allocations rules only for specified tasks.
-      labels:
-        task_kind: latency-critical
-      allocations:
-        cpu_quota: 1.
-        cpu_shares: 1000
-        rdt:
-          name: latency-critical
-          mb: 'MB:0=100;1=100'
-          l3: 'L3:0=7ff;1=7ff'
 
   #
-  # Example of dummy allocator, that justs returns hello_world metric.
+  # 1. Example of configuring of built-in rules based allocator.
   # 
-  dummy_allocator.py: |
+  # static_allocator.yml: |
+  #
+  #   - name: Best-effort rule from static file.
+  #     # Labels selector to apply allocations rules only for specified tasks.
+  #     labels:
+  #       task_kind: best-effort
+  #     allocations:
+  #       cpu_quota: 0.02
+  #       rdt:
+  #         name: best-effort
+  #         mb: 'MB:0=10;1=10'
+  #         l3: 'L3:0=1;1=1'
+  #
+  #   - name: Latency-critical rule from static-file.
+  #     # Labels selector to apply allocations rules only for specified tasks.
+  #     labels:
+  #       task_kind: latency-critical
+  #     allocations:
+  #       cpu_quota: 1.
+  #       rdt:
+  #         name: latency-critical
+  #         mb: 'MB:0=100;1=100'
+  #         l3: 'L3:0=7ff;1=7ff'
+
+  #
+  # 2. Example of dummy allocator, that justs returns hello_world metric.
+  # 
+  hello_world_allocator.py: |
+    import logging
+    log = logging.getLogger(__name__)
     from wca.metrics import Metric
     from wca.allocators import Allocator
-    class DummyAllocator(Allocator):
+    class HelloWorldAllocator(Allocator):
         def allocate(self, *args):
+            log.debug('Hello world!')
             return {}, [], [Metric('hello_world', 1)]
 
 
