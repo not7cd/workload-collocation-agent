@@ -24,35 +24,40 @@ clear
 
 
 
-# ########################################
+# #########################################
 # Part 1 - installation and basic features
-# ########################################
+# #########################################
 
 
 
 
-# Kubernetes setups
+# Kubernetes setup.
 kubectl get nodes -owide
 
 
 
-# Create "wca" namespace and secret
+# Create "wca" namespace and secret with key to access kubelet.
 kubectl create namespace wca
 kubectl create -n wca secret generic kubelet-key-crt --from-file=kubelet-client.crt --from-file=kubelet-client.key
+ls -1
 
 
-# Deploy "wca" pod
+
+# Deploy "wca" pod.
+vi wca.yaml
+clear
 kubectl apply -f wca.yaml
 
 
 
-# Check status
+
+# Check status.
 kubectl -n wca get pod wca
 kubectl -n wca describe pod wca
 
 
 
-# Watch WCA logs (window on the right)
+# Watch WCA logs (window on the right).
 while sleep 1; do kubectl logs -n wca -f wca -c wca; done
 
 
@@ -60,6 +65,7 @@ while sleep 1; do kubectl logs -n wca -f wca -c wca; done
 # Check that metrics are exported properly.
 clear
 kubectl exec -n wca wca -c wca -- cat /var/lib/wca/anomalies.prom
+clear
 curl -s 100.64.176.34:9100/metrics | grep wca_tasks
 
 
@@ -67,6 +73,10 @@ curl -s 100.64.176.34:9100/metrics | grep wca_tasks
 # Deploy simple synthetic workload "stress".
 clear
 kubectl create namespace workloads
+kubectl config set-context --current --namespace workloads
+kubectl get pods 
+vi stress1.yaml
+clear
 kubectl create -f stress1.yaml
 kubectl get pods 
 
@@ -75,6 +85,7 @@ kubectl get pods
 
 # Edit "stress1" pod labels to reclassify pod as "best-effort".
 kubectl edit pod stress1
+clear
 
 
 
@@ -82,37 +93,58 @@ kubectl edit pod stress1
 # Show that low level CPU/RDT resources are properly configured.
 clear
 ssh 100.64.176.34 'head /sys/fs/cgroup/cpu/kubepods/besteffort/*/cpu.cfs_quota_us'
+clear
 ssh 100.64.176.34 'ls -1 /sys/fs/resctrl/'
+clear
 ssh 100.64.176.34 'cat /sys/fs/resctrl/best-effort/schemata'
+
+# ... and RDT monitoring is properly configured.
+clear
 ssh 100.64.176.34 'head /sys/fs/resctrl/best-effort/mon_groups/*/mon_data/mon_L3_00/*'
+clear
+
 
 
 # Edit configuration e.g. enable more resource for best-effort tasks.
 kubectl -n wca edit configmap wca-config
 
 
-# Check Low level CPU/RDT resources are properly reconfigured.
+
+# Check low-level CPU/RDT resources are properly reconfigured.
 clear
 ssh 100.64.176.34 'head /sys/fs/cgroup/cpu/kubepods/besteffort/*/cpu.cfs_quota_us'
-ssh 100.64.176.34 'ls -1 /sys/fs/resctrl/'
+clear
 ssh 100.64.176.34 'cat /sys/fs/resctrl/best-effort/schemata'
-ssh 100.64.176.34 'head /sys/fs/resctrl/best-effort/mon_groups/*/mon_data/mon_L3_00/*'
+
+
+
 
 # Run another similar pod already classifed as "latency-critical".
+clear
 kubectl create -f stress2.yaml
 kubectl get pods 
+
+
+
 
 # Check Low level CPU/RDT resources are properly reconfigured for another pod.
 clear
 ssh 100.64.176.34 'head /sys/fs/cgroup/cpu/kubepods/burstable/*/cpu.cfs_quota_us'
+clear
 ssh 100.64.176.34 'ls -1 /sys/fs/resctrl/'
+clear
 ssh 100.64.176.34 'cat /sys/fs/resctrl/latency-critical/schemata'
-ssh 100.64.176.34 'head /sys/fs/resctrl/latency-critical/mon_groups/*/mon_data/mon_L3_00/*'
+
+
+
 
 # If resgroup name is not specified it would get default based on pod name.
 # Edit the rules first to remove "name" for RDTAllocation.
 kubectl -n wca edit configmap wca-config
 clear
+
+
+
 
 # Each pods get now own resctrl group.
 ssh 100.64.176.34 'ls -1 /sys/fs/resctrl/'
@@ -122,10 +154,14 @@ ssh 100.64.176.34 'ls -1 /sys/fs/resctrl/'
 ### Replace static allocator with "hello world" (and change to log level to info).
 # Recreate WCA pod with new configuration.
 vi wca.yaml
+clear
 kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
 
-# Let's see that new metrics is exposed.
+
+
+# Let's see that new metric is exposed by node_exporter.
 curl -s 100.64.176.34:9100/metrics | grep hello_world
+clear
 
 
 
@@ -156,6 +192,7 @@ kubectl delete configmap wca-allocator-plugin -n wca ; kubectl create configmap 
 
 # Reconfigure WCA to use python based plugin (third configuration)
 vi wca.yaml
+
 # Redeploy wca with new config.
 kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
 
@@ -164,15 +201,10 @@ kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
 
 
 # Run real workload (memcached fork with mutilate as load generator)
-kubectl create namespace workloads
 vi scenario1.yaml
+clear
 ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags twemcache_mutilate
 kubectl get pods 
-
-
-
-
-
 
 
 
@@ -183,9 +215,8 @@ kubectl get pod 34--twemcache-mutilate-default--twemcache--11311-0 -ojson | jq .
 
 
 
-
 # Latency-critical workload - load generator
-eubectl get pod 34--twemcache-mutilate-default--mutilate--11311-0 -ojson | jq .
+kubectl get pod 34--twemcache-mutilate-default--mutilate--11311-0 -ojson | jq .
 
 
 
@@ -198,7 +229,7 @@ http://100.64.176.12:3000
 
 
 
-# Run best-effort task causing the interference.
+# Run best-effort task causing the interference (without label for now).
 ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags stress_ng
 kubectl get pods
 
@@ -232,3 +263,30 @@ kubectl delete pod 34--stress-ng-default--0
 # THE END
 # ################################################
 
+
+
+# ################################################
+# Platform Resource Manager toolkit integration
+# ################################################
+
+cd ../..
+git clone https://github.com/intel/platform-resource-manager
+cd platform-resource-manager
+git submodule update --init
+cd prm
+make package
+cd ../../../serenity/owca/demo
+cp ../../platform-resource-manager/prm/dist/prm-plugin.pex .
+
+kubectl delete configmap prm-plugin -n wca ; kubectl create configmap prm-plugin --from-file prm-plugin.pex -n wca
+
+cat prm/Dockerfile
+docker build -t 100.64.176.12:80/wca-prm -f prm/Dockerfile prm/
+docker push 100.64.176.12:80/wca-prm:latest
+
+
+# Reconfigure (4.)
+
+kubectl delete configmap prm-plugin -n wca ; kubectl create -n wca configmap prm-plugin --from-file prm/workload.json
+
+kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml

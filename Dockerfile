@@ -32,6 +32,8 @@ RUN pipenv run make wca_package
 # Builing final container that consists of owca only.
 FROM centos:7
 
+WORKDIR /wca
+
 ENV CONFIG=/etc/wca/wca_config.yml \
     EXTRA_COMPONENT=example.external_package:ExampleDetector \
     LOG=info \

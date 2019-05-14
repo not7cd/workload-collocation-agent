@@ -32,7 +32,7 @@ class ExampleAllocator(Allocator):
 
     threshold: float = 1.
     metric_name: str = 'ipc'
-    _steady_duration: int = 3
+    _steady_duration: int = 10
 
     def allocate(self, platform, measurements, resources, labels, allocations):
 
@@ -69,7 +69,7 @@ class ExampleAllocator(Allocator):
                     allocation = THROTTLE
                     log.info('value of %r=%r -> throttle %s best-effort tasks', 
                              self.metric_name, value, len(be_tasks))
-                    self._steady_duration = 5
+                    self._steady_duration = 10
                 else:
                     self._steady_duration -= 1
                     # Enable only if steady state for at least 5 rounds.
@@ -77,7 +77,7 @@ class ExampleAllocator(Allocator):
                         allocation = ENABLE
                         log.info('value of %r=%r -> enable %s best-effort tasks', 
                                  self.metric_name, value, len(be_tasks))
-                        self._steady_duration = 5
+                        self._steady_duration = 10
                     else:
                         allocation = THROTTLE
 
