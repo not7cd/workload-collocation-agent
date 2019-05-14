@@ -1,1 +1,7 @@
-{"cassandra.default": {"mem": 51200.0, "cpus": 10.0, "disk": 51200.0}, "twemcache.big": {"mem": 51200.0, "cpus": 4.0, "disk": 51200.0}, "redis.default": {"mem": 2048.0, "cpus": 1.0, "disk": 2048.0}, "twemcache.small": {"mem": 51200.0, "cpus": 2.0, "disk": 51200.0}}
+{
+  "twemcache.default": {
+    "mem": 51200,
+    "cpus": 4,
+    "disk": 51200
+  }
+}

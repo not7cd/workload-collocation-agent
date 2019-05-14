@@ -22,12 +22,14 @@ spec:
 
     - name: wca
       # image: 100.64.176.12:80/wca:460ede361e19c8963e11a6706f5abc6ac0b4c7b7
+      # 4. PRM image
       image: 100.64.176.12:80/wca-prm:latest
       securityContext:
         privileged: true
+      workingDir: /wca
       env:
         - name: LOG
-          value: trace
+          value: info
         ### 2. Enable this for python dummy hello world allocator plugin.
         # - name: PEX_INHERIT_PATH
         #   value: 'true'
@@ -46,12 +48,11 @@ spec:
         #   value: '--log example_allocator:debug'
         ### 4. Platform Resource Manager
         - name: PEX_PATH
-          value: prm-plugin.pex
+          value: /prm-plugin.pex
         - name: EXTRA_COMPONENT
           value: prm.allocator:ResourceAllocator
         - name: EXTRA_OPTIONS
           value: '--log prm:debug'
-      # command: ["sleep", "inf"]
       volumeMounts:
         - name: kubelet-key-crt
           mountPath: /etc/kubernetes/
@@ -65,14 +66,13 @@ spec:
           mountPath: /sys/fs/resctrl/
         - name: dev-cpu
           mountPath: /dev/cpu
-        ### 3. this for python-based allocator plugin.
+        ### 3. This for python-based allocator plugin.
         # - name: wca-allocator-plugin
         #   mountPath: /example_allocator.py
         #   subPath: example_allocator.py
-        ### 3. this for python-based allocator plugin.
+        ### 4. Platform resource manager config files
         - name: prm-plugin
-          mountPath: /
-            subPath: workload.json
+          mountPath: /wca
 
     - name: node-exporter
       image: prom/node-exporter@sha256:ffc3e0adf58771cb2097aa0b074a6fe68b4925ba75c2e1c41f41ae656eebee11
@@ -119,7 +119,7 @@ spec:
         path: /dev/cpu
     - name: var-lib-wca
       emptyDir: {}
-    ### 3. ENABLE this for python-based plugin
+    ### 3. Example plugin source code
     # - name: wca-allocator-plugin
     #   configMap:
     #     name: wca-allocator-plugin
@@ -194,7 +194,7 @@ data:
 
       #
       ### 2. Hello World Allocator
-      #
+
       # allocator: !HelloWorldAllocator
 
       ### 3. Example Allocator
@@ -202,12 +202,12 @@ data:
       #   threshold: 0.6
 
       ### 4. Platform Resource Allocator
-      # allocator: !ResourceAllocator
-      #   action_delay: 5.
-      #   mode_config: detect
+      allocator: !ResourceAllocator
+        action_delay: 10.
+        mode_config: detect
 
-      ### 4. Platform Resource Allocator
-      allocator: !NOPAllocator
+      ### 5. Debugging purposes
+      # allocator: !NOPAllocator
 
   #
   # 1. Example of configuring of built-in rules based allocator.

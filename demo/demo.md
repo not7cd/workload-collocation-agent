@@ -176,6 +176,8 @@ clear
 # ########################################################
 
 
+
+
 # Delete existing pods.
 kubectl delete pods --all
 kubectl get pods
@@ -259,34 +261,49 @@ kubectl delete pod 34--stress-ng-default--0
 
 
 
-# ################################################
-# THE END
-# ################################################
+# #####################################################
+# Part 3: Platform Resource Manager toolkit integration
+# #####################################################
 
 
-
-# ################################################
-# Platform Resource Manager toolkit integration
-# ################################################
-
-cd ../..
-git clone https://github.com/intel/platform-resource-manager
-cd platform-resource-manager
-git submodule update --init
-cd prm
-make package
-cd ../../../serenity/owca/demo
-cp ../../platform-resource-manager/prm/dist/prm-plugin.pex .
-
-kubectl delete configmap prm-plugin -n wca ; kubectl create configmap prm-plugin --from-file prm-plugin.pex -n wca
-
-cat prm/Dockerfile
+# build PRM
+wd prm
+pwd
+make plugin
+wd demo
+pwd
+cp ../../platform-resource-manager/prm/dist/prm-plugin.pex prm/
+vim prm/Dockerfile
+clear
 docker build -t 100.64.176.12:80/wca-prm -f prm/Dockerfile prm/
 docker push 100.64.176.12:80/wca-prm:latest
 
 
-# Reconfigure (4.)
 
-kubectl delete configmap prm-plugin -n wca ; kubectl create -n wca configmap prm-plugin --from-file prm/workload.json
 
+
+# Create configmap with PRM configuration
+vi prm/threshold.json
+vi prm/workload.json
+clear
+
+kubectl delete configmap prm-plugin -n wca ; kubectl create -n wca configmap prm-plugin --from-file prm/workload.json --from-file prm/util.csv --from-file prm/metric.csv --from-file prm/threshold.json
+
+# Reconfigure WCA pod to use PRM plugin.
+vi wca.yaml
+clear
 kubectl delete pod wca --namespace wca ; kubectl apply -f wca.yaml
+
+
+# Repeat scenario1 from part2
+
+ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags twemcache_mutilate
+
+# Observer effects in dedicated "PRM analysis" Grafana dashboard
+
+ansible-playbook -i scenario1.yaml ../workloads/run_workloads.yaml --tags stress_ng
+
+kubectl get pods
+
+kubectl delete pod 34--stress-ng-default--0
+

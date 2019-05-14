@@ -38,6 +38,7 @@ environment = 'staging' + env_uniq_id
 
 # For workloads like tensorflow ignore load_generator_host_ip is ignored.
 application_host_ip = os.getenv('application_host_ip')
+application_version_name = os.environ.get('application_version_name', workload_version_name)
 load_generator_host_ip = os.getenv('load_generator_host_ip')
 own_ip = os.getenv('own_ip')
 
@@ -70,6 +71,7 @@ wrapper_log_level = os.getenv('wrapper_log_level', 'DEBUG')
 # Here as dict, must be passed to wrapper as json string.
 #   Can be extended as desired in workload's aurora manifests.
 extra_labels = json.loads(os.getenv('labels', '{}'))
+
 wrapper_labels = {
     'workload_name': workload_name,
     'workload_version_name': workload_version_name,
@@ -83,6 +85,9 @@ wrapper_labels = {
     'own_ip': own_ip,
     'application_host_ip': application_host_ip,
     'load_generator_host_ip': load_generator_host_ip,
+    'application_version_name': application_version_name,
+
+
 }
 wrapper_labels.update(extra_labels)
 
