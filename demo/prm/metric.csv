@@ -1,0 +1,1 @@
+time,cid,name,cycle,instruction,cache_miss,cache_occupancy,memory_bandwidth_total,cycles_per_instruction,cache_miss_per_kilo_instruction,normalized_frequency,cpu_utilization,stalls_memory_load_per_kilo_instruction

@@ -29,3 +29,4 @@ unit_results.xml
 metrics.prom
 /demo/kubelet-client.crt
 /demo/kubelet-client.key
+/demo/prm/prm-plugin.pex
