@@ -71,6 +71,9 @@ extra_labels = json.loads(os.getenv('labels', '{}'))
 wrapper_labels = {
     'workload_name': workload_name,
     'workload_version_name': workload_version_name,
+    'workload_instance': '--'.join([workload_name,
+                                    workload_version_name,
+                                    env_uniq_id, job_uniq_id]),
     'replica_index': replica_index,
     'name': job_name,       # not to break compability
     'job_name': job_name,   #
