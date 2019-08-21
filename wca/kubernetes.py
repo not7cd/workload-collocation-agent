@@ -201,7 +201,9 @@ def _build_cgroup_path(cgroup_driver, qos, pod_id, container_id=''):
     return result
 
 
-_MEMORY_UNITS = {'Ki': 1024, 'Mi': 1024**2, 'Gi': 1024**3, }
+# https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#meaning-of-memory
+_MEMORY_UNITS = {'Ki': 1024, 'Mi': 1024**2, 'Gi': 1024**3, 'Ti': 1024**4,
+                 'K': 1000, 'M': 1000**2, 'G': 1000**3, 'T': 1000**4}
 _CPU_UNITS = {'m': 0.001}
 _RESOURCE_TYPES = ['requests', 'limits']
 _MAPPING = {'requests_memory': 'mem', 'ephemeral-storage': 'disk', 'requests_cpu': 'cpus'}
